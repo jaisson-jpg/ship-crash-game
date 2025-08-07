@@ -65,9 +65,10 @@ function generateCrashPoint() {
   return 5.00 + Math.random() * 15.00; // 5.00-20.00
 }
 
-// Função para calcular multiplicador
+// Função para calcular multiplicador (mais agressiva)
 function calculateMultiplier(elapsedTime) {
-  return 1.00 + (elapsedTime / 1000) * 0.1;
+  const seconds = elapsedTime / 1000;
+  return 1.00 + Math.pow(seconds * 0.1, 1.1);
 }
 
 // Broadcast para todos os clientes
@@ -98,64 +99,98 @@ function startNewGame() {
   });
   
   const gameInterval = setInterval(() => {
-    const elapsedTime = Date.now() - startTime;
-    currentMultiplier = calculateMultiplier(elapsedTime);
-    
-    // Verificar se deve crashar
-    if (currentMultiplier >= crashPoint) {
-      clearInterval(gameInterval);
+    try {
+      const elapsedTime = Date.now() - startTime;
+      currentMultiplier = calculateMultiplier(elapsedTime);
       
-      // Crash!
-      gameState = 'CRASHED';
-      gameHistory.unshift({
-        round: currentRound,
-        crashPoint: crashPoint,
-        timestamp: Date.now()
-      });
-      
-      // Manter apenas últimos 10 jogos
-      if (gameHistory.length > 10) {
-        gameHistory = gameHistory.slice(0, 10);
+      // Verificar se deve crashar
+      if (currentMultiplier >= crashPoint) {
+        clearInterval(gameInterval);
+        
+        // Crash!
+        gameState = 'CRASHED';
+        const crashData = {
+          round: currentRound,
+          crashPoint: crashPoint,
+          timestamp: Date.now()
+        };
+        
+        gameHistory.unshift(crashData);
+        
+        // Manter apenas últimos 10 jogos
+        if (gameHistory.length > 10) {
+          gameHistory = gameHistory.slice(0, 10);
+        }
+        
+        broadcast({
+          type: 'game_crashed',
+          crashPoint: crashPoint,
+          round: currentRound,
+          history: gameHistory
+        });
+        
+        console.log(`💥 Jogo ${currentRound} crashou em ${crashPoint.toFixed(2)}x`);
+        
+        // Aguardar antes do próximo jogo
+        setTimeout(() => {
+          currentRound++;
+          startWaitingPeriod();
+        }, CRASH_TIME);
+        
+      } else {
+        // Enviar atualização de multiplicador
+        broadcast({
+          type: 'multiplier_update',
+          multiplier: parseFloat(currentMultiplier.toFixed(4)),
+          round: currentRound,
+          state: 'RUNNING'
+        });
       }
-      
-      broadcast({
-        type: 'game_crashed',
-        crashPoint: crashPoint,
-        round: currentRound
-      });
-      
-      console.log(`💥 Jogo ${currentRound} crashou em ${crashPoint.toFixed(2)}x`);
-      
-      // Aguardar antes do próximo jogo
+    } catch (error) {
+      console.error('❌ Erro no loop do jogo:', error);
+      clearInterval(gameInterval);
+      // Reiniciar jogo em caso de erro
       setTimeout(() => {
         currentRound++;
         startWaitingPeriod();
-      }, CRASH_TIME);
-      
-    } else {
-      // Enviar atualização de multiplicador
-      broadcast({
-        type: 'multiplier_update',
-        multiplier: currentMultiplier,
-        round: currentRound
-      });
+      }, 3000);
     }
   }, GAME_INTERVAL);
 }
 
 // Período de espera
 function startWaitingPeriod() {
+  console.log(`⏳ Aguardando ${WAIT_TIME/1000}s para jogo ${currentRound}`);
+  
   gameState = 'WAITING_TO_START';
   
   broadcast({
     type: 'waiting_period',
     duration: WAIT_TIME,
-    nextRound: currentRound
+    nextRound: currentRound,
+    state: 'WAITING_TO_START',
+    history: gameHistory
   });
   
-  console.log(`⏳ Aguardando ${WAIT_TIME/1000}s para próximo jogo`);
+  // Countdown para o próximo jogo
+  let countdown = WAIT_TIME / 1000;
+  const countdownInterval = setInterval(() => {
+    countdown--;
+    if (countdown <= 0) {
+      clearInterval(countdownInterval);
+    } else {
+      broadcast({
+        type: 'countdown_update',
+        countdown: countdown,
+        nextRound: currentRound
+      });
+    }
+  }, 1000);
   
-  setTimeout(startNewGame, WAIT_TIME);
+  setTimeout(() => {
+    clearInterval(countdownInterval);
+    startNewGame();
+  }, WAIT_TIME);
 }
 
 // WebSocket connection
@@ -242,9 +277,18 @@ server.listen(PORT, () => {
   console.log(`✅ Servidor rodando na porta ${PORT}`);
   console.log(`🌐 URL: https://web-production-20fe.up.railway.app`);
   console.log(`🎮 WebSocket ativo na mesma porta`);
+  console.log(`🎯 Iniciando sistema de jogo...`);
+  
+  // Resetar estado inicial
+  gameState = 'WAITING_TO_START';
+  currentRound = 1;
+  gameHistory = [];
   
   // Iniciar primeiro jogo após 3 segundos
-  setTimeout(startWaitingPeriod, 3000);
+  setTimeout(() => {
+    console.log(`🚀 Iniciando primeiro ciclo do jogo`);
+    startWaitingPeriod();
+  }, 3000);
 });
 
 // Tratamento de erros
