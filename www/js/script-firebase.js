@@ -50,7 +50,11 @@ let currentShipX = SHIP_START_LEFT_OFFSET_PX;
 const SHIP_HORIZONTAL_SPEED_FACTOR = 31.5;
 
 // URL do servidor WebSocket
-const SOCKET_URL = 'ws://192.168.100.45:3000';
+// Detectar se está no Railway ou local
+const isRailway = window.location.hostname.includes('railway.app');
+const SOCKET_URL = isRailway 
+  ? `wss://${window.location.hostname}` 
+  : 'ws://localhost:3000';
 let socket;
 
 // --- VERIFICAÇÃO DE AUTENTICAÇÃO ---
@@ -477,6 +481,8 @@ function atualizarHistoricoNaTela() {
 
 // --- WEBSOCKET ---
 function connectWebSocket() {
+    console.log("GAME.JS: Detectado Railway:", isRailway);
+    console.log("GAME.JS: Hostname:", window.location.hostname);
     console.log("GAME.JS: Tentando conectar ao WebSocket em:", SOCKET_URL);
     socket = new WebSocket(SOCKET_URL);
     
