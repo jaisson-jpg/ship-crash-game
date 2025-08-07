@@ -284,26 +284,53 @@ function initializeGame() {
 }
 
 // --- FUNÇÕES DE UI ---
-function updateBalanceDisplay() {
+async function updateBalanceDisplay() {
     console.log("GAME.JS: updateBalanceDisplay() chamada");
+    
+    // Tentar atualizar saldo do Firestore se possível
+    if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+        try {
+            const currentUser = firebase.auth().currentUser;
+            const userDoc = await firebase.firestore().collection('users').doc(currentUser.uid).get();
+            
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                playerBalance = userData.balance || 0;
+                console.log("GAME.JS: Saldo atualizado do Firestore:", playerBalance);
+                
+                // Atualizar localStorage também
+                localStorage.setItem('crashGamePlayerBalance', playerBalance);
+            }
+        } catch (error) {
+            console.log("GAME.JS: Erro ao buscar saldo do Firestore, usando localStorage:", error);
+        }
+    }
+    
     console.log("GAME.JS: - playerBalanceSpan existe:", !!playerBalanceSpan);
     console.log("GAME.JS: - playerBalance:", playerBalance);
     
-    if (playerBalanceSpan) {
-        const balanceText = playerBalance.toFixed(2);
-        playerBalanceSpan.textContent = balanceText;
-        console.log("GAME.JS: Saldo atualizado no DOM:", balanceText);
-    } else {
-        console.error("GAME.JS: playerBalanceSpan não encontrado!");
-        // Tentar encontrar o elemento novamente
-        const balanceElement = document.getElementById('playerBalance');
-        if (balanceElement) {
+    // Tentar múltiplos elementos
+    const balanceElements = [
+        playerBalanceSpan,
+        document.getElementById('playerBalance'),
+        document.querySelector('#playerBalance'),
+        document.querySelector('.balance'),
+        document.querySelector('[data-balance]')
+    ];
+    
+    let updated = false;
+    for (const element of balanceElements) {
+        if (element) {
             const balanceText = playerBalance.toFixed(2);
-            balanceElement.textContent = balanceText;
-            console.log("GAME.JS: Saldo atualizado no DOM (segunda tentativa):", balanceText);
-        } else {
-            console.error("GAME.JS: Elemento playerBalance não encontrado mesmo na segunda tentativa!");
+            element.textContent = balanceText;
+            console.log("GAME.JS: Saldo atualizado no DOM:", balanceText);
+            updated = true;
+            break;
         }
+    }
+    
+    if (!updated) {
+        console.error("GAME.JS: Nenhum elemento de saldo encontrado!");
     }
 }
 
@@ -372,18 +399,41 @@ function updateUIState() {
 }
 
 function updateMultiplierDisplay() {
-    if (!multiplierDisplay) return;
-    multiplierDisplay.textContent = `${currentMultiplier.toFixed(2)}x`;
-    multiplierDisplay.className = 'multiplier';
+    // Tentar múltiplos elementos do multiplicador
+    const multiplierElements = [
+        multiplierDisplay,
+        document.getElementById('multiplier'),
+        document.querySelector('.multiplier'),
+        document.querySelector('[data-multiplier]')
+    ];
+    
+    let updated = false;
+    for (const element of multiplierElements) {
+        if (element) {
+            element.textContent = `${currentMultiplier.toFixed(2)}x`;
+            element.className = 'multiplier';
 
-    if (currentMultiplier < 2.0) { multiplierDisplay.classList.add('m-white'); }
-    else if (currentMultiplier < 10) { multiplierDisplay.classList.add('m-green'); }
-    else if (currentMultiplier < 100) { multiplierDisplay.classList.add('m-yellow'); }
-    else { multiplierDisplay.classList.add('m-gold'); }
+            if (currentMultiplier < 2.0) { element.classList.add('m-white'); }
+            else if (currentMultiplier < 10) { element.classList.add('m-green'); }
+            else if (currentMultiplier < 100) { element.classList.add('m-yellow'); }
+            else { element.classList.add('m-gold'); }
+            
+            updated = true;
+            break;
+        }
+    }
+    
+    if (!updated) {
+        console.error("GAME.JS: Nenhum elemento de multiplicador encontrado!");
+    }
 
+    // Atualizar botão de cash out
     if (gameRunning && gameState === 'ROUND_ACTIVE' && cashOutBtn) {
         cashOutBtn.textContent = `Sair (R$ ${(currentBet * currentMultiplier).toFixed(2)})`;
     }
+    
+    // Log para debug
+    console.log(`GAME.JS: Multiplicador exibido: ${currentMultiplier.toFixed(2)}x`);
 }
 
 // --- HISTÓRICO ---
@@ -559,21 +609,30 @@ function connectWebSocket() {
                     if(statusMessage) statusMessage.textContent = 'Navio navegando...';
                     break;
                 case 'multiplier_update':
-                    if (gameState === 'ROUND_ACTIVE' || (gameState === 'WAITING_TO_START' && currentMultiplier > 1.00) ) {
-                        currentMultiplier = data.multiplier;
-                        updateMultiplierDisplay();
+                    // Sempre atualizar o multiplicador quando receber do servidor
+                    currentMultiplier = data.multiplier;
+                    gameState = 'ROUND_ACTIVE'; // Garantir que está no estado ativo
+                    
+                    // Atualizar display do multiplicador
+                    updateMultiplierDisplay();
+                    
+                    // Atualizar posição do navio
+                    if (shipElement && gameArea) {
+                        const gameAreaWidth = gameArea.offsetWidth;
+                        const shipWidth = shipElement.offsetWidth;
+                        let targetX = (currentMultiplier - 1) * SHIP_HORIZONTAL_SPEED_FACTOR;
 
-                        if (shipElement && gameArea) {
-                            const gameAreaWidth = gameArea.offsetWidth;
-                            const shipWidth = shipElement.offsetWidth;
-                            let targetX = (currentMultiplier - 1) * SHIP_HORIZONTAL_SPEED_FACTOR;
+                        const maxShipX = gameAreaWidth - shipWidth - SHIP_START_LEFT_OFFSET_PX - 10;
+                        currentShipX = Math.min(targetX, maxShipX);
 
-                            const maxShipX = gameAreaWidth - shipWidth - SHIP_START_LEFT_OFFSET_PX - 10;
-                            currentShipX = Math.min(targetX, maxShipX);
-
-                            shipElement.style.transform = `translateX(${currentShipX}px) rotate(0deg)`;
-                        }
+                        shipElement.style.transform = `translateX(${currentShipX}px) rotate(0deg)`;
+                        
+                        // Remover classe de afundamento se existir
+                        shipElement.classList.remove('sinking');
                     }
+                    
+                    // Log para debug
+                    console.log(`GAME.JS: Multiplicador atualizado para ${currentMultiplier.toFixed(2)}x`);
                     break;
                 case 'crash':
                     gameState = 'ROUND_CRASHED';
