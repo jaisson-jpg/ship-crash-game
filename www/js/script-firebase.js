@@ -393,13 +393,15 @@ function populateGlobalHistory(historyArray) {
 
     historyArray.slice(0, MAX_GLOBAL_HISTORY_ITEMS).forEach(histItemData => {
         const itemElement = document.createElement('div');
-        itemElement.textContent = histItemData.multiplier.toFixed(2) + 'x';
+        // Usar crashPoint em vez de multiplier
+        const multiplier = histItemData.crashPoint || histItemData.multiplier || 0;
+        itemElement.textContent = multiplier.toFixed(2) + 'x';
         itemElement.classList.add('history-item');
 
-        if (histItemData.multiplier < 1.01) { itemElement.classList.add('red'); }
-        else if (histItemData.multiplier < 2.0) { itemElement.classList.add('white'); }
-        else if (histItemData.multiplier < 10) { itemElement.classList.add('green'); }
-        else if (histItemData.multiplier < 100) { itemElement.classList.add('m-yellow'); }
+        if (multiplier < 1.01) { itemElement.classList.add('red'); }
+        else if (multiplier < 2.0) { itemElement.classList.add('white'); }
+        else if (multiplier < 10) { itemElement.classList.add('green'); }
+        else if (multiplier < 100) { itemElement.classList.add('m-yellow'); }
         else { itemElement.classList.add('m-gold'); }
 
         gameHistory.appendChild(itemElement);
