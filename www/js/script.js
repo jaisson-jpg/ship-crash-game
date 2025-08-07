@@ -218,11 +218,8 @@ let currentShipX = SHIP_START_LEFT_OFFSET_PX; // Posição X atual do navio
 const SHIP_HORIZONTAL_SPEED_FACTOR = 31.5; // Ajuste para controlar a velocidade horizontal do navio com o multiplicador
 
 // URL do servidor WebSocket (VERIFIQUE SEU IP/PORTA)
-// Detectar se está no Railway ou local
-const isRailway = window.location.hostname.includes('railway.app');
-const SOCKET_URL = isRailway 
-  ? `wss://${window.location.hostname}` 
-  : 'ws://localhost:3000';
+// URL do WebSocket - FORÇAR Railway
+const SOCKET_URL = 'wss://web-production-20fe.up.railway.app';
 let socket;
 
 // --- DEFINIÇÃO DAS FUNÇÕES ---

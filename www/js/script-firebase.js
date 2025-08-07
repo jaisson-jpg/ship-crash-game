@@ -50,11 +50,8 @@ let currentShipX = SHIP_START_LEFT_OFFSET_PX;
 const SHIP_HORIZONTAL_SPEED_FACTOR = 31.5;
 
 // URL do servidor WebSocket
-// Detectar se está no Railway ou local
-const isRailway = window.location.hostname.includes('railway.app');
-const SOCKET_URL = isRailway 
-  ? `wss://${window.location.hostname}` 
-  : 'ws://localhost:3000';
+// URL do WebSocket - FORÇAR Railway
+const SOCKET_URL = 'wss://web-production-20fe.up.railway.app';
 let socket;
 
 // --- VERIFICAÇÃO DE AUTENTICAÇÃO ---
@@ -481,9 +478,12 @@ function atualizarHistoricoNaTela() {
 
 // --- WEBSOCKET ---
 function connectWebSocket() {
-    console.log("GAME.JS: Detectado Railway:", isRailway);
-    console.log("GAME.JS: Hostname:", window.location.hostname);
-    console.log("GAME.JS: Tentando conectar ao WebSocket em:", SOCKET_URL);
+    console.log("GAME.JS: === DEBUG WEBSOCKET ===");
+    console.log("GAME.JS: window.location.hostname:", window.location.hostname);
+    console.log("GAME.JS: window.location.href:", window.location.href);
+    console.log("GAME.JS: includes railway.app?", window.location.hostname.includes('railway.app'));
+    console.log("GAME.JS: SOCKET_URL final:", SOCKET_URL);
+    console.log("GAME.JS: ========================");
     socket = new WebSocket(SOCKET_URL);
     
     const connectionTimeout = setTimeout(() => {
