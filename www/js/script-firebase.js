@@ -99,9 +99,29 @@ function checkAuthAndContinue() {
     });
     
     if (authToken && loggedInUserStr) {
-        console.log("GAME.JS: Usuário encontrado via localStorage, continuando...");
-        initializeGameFromLocalStorage();
-        return;
+        console.log("GAME.JS: Usuário encontrado via localStorage, tentando login automático no Firebase...");
+        
+        // 🔥 TENTAR FAZER LOGIN AUTOMÁTICO NO FIREBASE
+        try {
+            const userData = JSON.parse(loggedInUserStr);
+            console.log("GAME.JS: Dados do usuário para login automático:", userData);
+            
+            // Se temos um email salvo, tentar fazer login silencioso
+            if (userData.email) {
+                console.log("GAME.JS: Tentando login automático com email:", userData.email);
+                // Continuar sem Firebase por agora, mas com dados do localStorage
+                initializeGameFromLocalStorage();
+                return;
+            } else {
+                console.log("GAME.JS: Sem email para login automático, continuando com localStorage");
+                initializeGameFromLocalStorage();
+                return;
+            }
+        } catch (error) {
+            console.log("GAME.JS: Erro ao processar dados do localStorage:", error);
+            initializeGameFromLocalStorage();
+            return;
+        }
     }
     
     // Tentar ler dados da URL como fallback
@@ -329,66 +349,95 @@ function initializeGame() {
 async function forceBalanceUpdateFromFirestore() {
     console.log("GAME.JS: 🔄 Forçando atualização de saldo do Firestore...");
     
-    if (typeof firebase === 'undefined' || !firebase.auth || !firebase.auth().currentUser) {
-        console.log("GAME.JS: ❌ Firebase não disponível ou usuário não logado");
+    // Verificar se Firebase está disponível
+    if (typeof firebase === 'undefined' || !firebase.firestore) {
+        console.log("GAME.JS: ❌ Firebase não disponível");
         return false;
     }
     
-    try {
-        const currentUser = firebase.auth().currentUser;
-        const userDoc = await firebase.firestore().collection('users').doc(currentUser.uid).get();
-        
-        if (userDoc.exists) {
-            const userData = userDoc.data();
-            const newBalance = userData.balance || 0;
-            
-            console.log("GAME.JS: 💰 Saldo atual no Firestore:", newBalance);
-            console.log("GAME.JS: 💰 Saldo antigo no jogo:", playerBalance);
-            
-            if (newBalance !== playerBalance) {
-                playerBalance = newBalance;
-                localStorage.setItem('crashGamePlayerBalance', playerBalance);
-                console.log("GAME.JS: ✅ Saldo atualizado para:", playerBalance);
-                
-                // Atualizar display imediatamente
-                await updateBalanceDisplay();
-                return true;
-            } else {
-                console.log("GAME.JS: ℹ️ Saldo já está sincronizado");
-                return false;
-            }
-        } else {
-            console.log("GAME.JS: ❌ Documento do usuário não encontrado");
-            return false;
-        }
-    } catch (error) {
-        console.error("GAME.JS: ❌ Erro ao buscar saldo:", error);
-        return false;
-    }
-}
-
-// --- FUNÇÕES DE UI ---
-async function updateBalanceDisplay() {
-    console.log("GAME.JS: updateBalanceDisplay() chamada");
-    
-    // Tentar atualizar saldo do Firestore se possível
-    if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+    // 🔥 PRIMEIRO: Tentar com usuário autenticado
+    if (firebase.auth && firebase.auth().currentUser) {
+        console.log("GAME.JS: ✅ Usuário autenticado encontrado, buscando no Firestore...");
         try {
             const currentUser = firebase.auth().currentUser;
             const userDoc = await firebase.firestore().collection('users').doc(currentUser.uid).get();
             
             if (userDoc.exists) {
                 const userData = userDoc.data();
-                playerBalance = userData.balance || 0;
-                console.log("GAME.JS: Saldo atualizado do Firestore:", playerBalance);
+                const newBalance = userData.balance || 0;
                 
-                // Atualizar localStorage também
-                localStorage.setItem('crashGamePlayerBalance', playerBalance);
+                console.log("GAME.JS: 💰 Saldo atual no Firestore:", newBalance);
+                console.log("GAME.JS: 💰 Saldo antigo no jogo:", playerBalance);
+                
+                if (newBalance !== playerBalance) {
+                    playerBalance = newBalance;
+                    localStorage.setItem('crashGamePlayerBalance', playerBalance);
+                    console.log("GAME.JS: ✅ Saldo atualizado para:", playerBalance);
+                    
+                    // Atualizar display imediatamente
+                    await updateBalanceDisplay();
+                    return true;
+                } else {
+                    console.log("GAME.JS: ℹ️ Saldo já está sincronizado");
+                    return false;
+                }
             }
         } catch (error) {
-            console.log("GAME.JS: Erro ao buscar saldo do Firestore, usando localStorage:", error);
+            console.error("GAME.JS: ❌ Erro ao buscar saldo com usuário autenticado:", error);
         }
     }
+    
+    // 🔥 SEGUNDO: Tentar buscar por numericId se temos localStorage
+    const loggedInUserStr = localStorage.getItem('crashGameLoggedInUser');
+    if (loggedInUserStr) {
+        try {
+            const userData = JSON.parse(loggedInUserStr);
+            const numericId = userData.userId;
+            
+            console.log("GAME.JS: ⚡ Tentando buscar por numericId:", numericId);
+            
+            // Buscar usuário pelo numericId
+            const usersQuery = await firebase.firestore().collection('users')
+                .where('numericId', '==', parseInt(numericId))
+                .limit(1)
+                .get();
+            
+            if (!usersQuery.empty) {
+                const userDoc = usersQuery.docs[0];
+                const firestoreData = userDoc.data();
+                const newBalance = firestoreData.balance || 0;
+                
+                console.log("GAME.JS: 💰 Saldo encontrado por numericId:", newBalance);
+                console.log("GAME.JS: 💰 Saldo antigo no jogo:", playerBalance);
+                
+                if (newBalance !== playerBalance) {
+                    playerBalance = newBalance;
+                    localStorage.setItem('crashGamePlayerBalance', playerBalance);
+                    console.log("GAME.JS: ✅ Saldo atualizado via numericId para:", playerBalance);
+                    
+                    // Atualizar display imediatamente
+                    await updateBalanceDisplay();
+                    return true;
+                } else {
+                    console.log("GAME.JS: ℹ️ Saldo já está sincronizado (via numericId)");
+                    return false;
+                }
+            } else {
+                console.log("GAME.JS: ❌ Usuário não encontrado por numericId:", numericId);
+            }
+        } catch (error) {
+            console.error("GAME.JS: ❌ Erro ao buscar saldo por numericId:", error);
+        }
+    }
+    
+    console.log("GAME.JS: ❌ Não foi possível atualizar saldo do Firestore");
+    return false;
+}
+
+// --- FUNÇÕES DE UI ---
+async function updateBalanceDisplay() {
+    console.log("GAME.JS: updateBalanceDisplay() chamada");
+    console.log("GAME.JS: Saldo atual:", playerBalance);
     
     console.log("GAME.JS: - playerBalanceSpan existe:", !!playerBalanceSpan);
     console.log("GAME.JS: - playerBalance:", playerBalance);
@@ -1002,4 +1051,5 @@ setTimeout(() => {
     }
 }, 5000); // Aguardar 5 segundos para garantir que tudo esteja carregado
 
+console.log('script-firebase.js: Script carregado'); 
 console.log('script-firebase.js: Script carregado'); 
