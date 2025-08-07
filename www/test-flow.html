@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Fluxo - Ship Crash</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #0a0a0a;
+            color: #ffffff;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        .test-button {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #45b7d1;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ecdc4;
+        }
+        .status.error {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+        .status.info {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste de Fluxo - Ship Crash</h1>
+    
+    <div class="test-section">
+        <h2>1. Verificação de Firebase</h2>
+        <button class="test-button" onclick="testFirebase()">Testar Firebase</button>
+        <div id="firebase-status" class="status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Teste de Autenticação</h2>
+        <button class="test-button" onclick="testAuth()">Testar Autenticação</button>
+        <div id="auth-status" class="status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Teste de LocalStorage</h2>
+        <button class="test-button" onclick="testLocalStorage()">Testar LocalStorage</button>
+        <div id="localstorage-status" class="status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Teste de Fluxo Completo</h2>
+        <button class="test-button" onclick="testCompleteFlow()">Testar Fluxo Completo</button>
+        <div id="flow-status" class="status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Navegação</h2>
+        <button class="test-button" onclick="goToIndex()">Ir para Index</button>
+        <button class="test-button" onclick="goToGame()">Ir para Game</button>
+        <button class="test-button" onclick="clearAll()">Limpar Tudo</button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <script src="js/firebase-config.js"></script>
+    
+    <script>
+        function showStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `status ${type}`;
+        }
+        
+        function testFirebase() {
+            showStatus('firebase-status', 'Testando Firebase...', 'info');
+            
+            if (typeof firebase === 'undefined') {
+                showStatus('firebase-status', '❌ Firebase não está carregado!', 'error');
+                return;
+            }
+            
+            try {
+                const auth = firebase.auth();
+                const db = firebase.firestore();
+                showStatus('firebase-status', '✅ Firebase carregado com sucesso!', 'success');
+            } catch (error) {
+                showStatus('firebase-status', `❌ Erro no Firebase: ${error.message}`, 'error');
+            }
+        }
+        
+        function testAuth() {
+            showStatus('auth-status', 'Testando autenticação...', 'info');
+            
+            if (typeof firebase === 'undefined') {
+                showStatus('auth-status', '❌ Firebase não está carregado!', 'error');
+                return;
+            }
+            
+            const currentUser = firebase.auth().currentUser;
+            if (currentUser) {
+                showStatus('auth-status', `✅ Usuário logado: ${currentUser.email}`, 'success');
+            } else {
+                showStatus('auth-status', 'ℹ️ Nenhum usuário logado', 'info');
+            }
+        }
+        
+        function testLocalStorage() {
+            showStatus('localstorage-status', 'Testando localStorage...', 'info');
+            
+            const authToken = localStorage.getItem('crashGameAuthToken');
+            const userId = localStorage.getItem('crashGameUserId');
+            const balance = localStorage.getItem('crashGamePlayerBalance');
+            const loggedInUser = localStorage.getItem('crashGameLoggedInUser');
+            
+            let status = '';
+            status += `Auth Token: ${authToken ? '✅' : '❌'}\n`;
+            status += `User ID: ${userId || 'N/A'}\n`;
+            status += `Balance: ${balance || 'N/A'}\n`;
+            status += `Logged In User: ${loggedInUser ? '✅' : '❌'}`;
+            
+            if (authToken && userId) {
+                showStatus('localstorage-status', status, 'success');
+            } else {
+                showStatus('localstorage-status', status, 'info');
+            }
+        }
+        
+        function testCompleteFlow() {
+            showStatus('flow-status', 'Testando fluxo completo...', 'info');
+            
+            // Verificar Firebase
+            if (typeof firebase === 'undefined') {
+                showStatus('flow-status', '❌ Firebase não está carregado!', 'error');
+                return;
+            }
+            
+            // Verificar autenticação
+            const currentUser = firebase.auth().currentUser;
+            const authToken = localStorage.getItem('crashGameAuthToken');
+            
+            if (currentUser || authToken) {
+                showStatus('flow-status', '✅ Fluxo de autenticação funcionando!', 'success');
+            } else {
+                showStatus('flow-status', 'ℹ️ Usuário não autenticado - fluxo normal', 'info');
+            }
+        }
+        
+        function goToIndex() {
+            window.location.href = 'index.html';
+        }
+        
+        function goToGame() {
+            window.location.href = 'game.html';
+        }
+        
+        function clearAll() {
+            localStorage.clear();
+            showStatus('flow-status', '✅ LocalStorage limpo!', 'success');
+        }
+        
+        // Executar testes automáticos ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                testFirebase();
+                testAuth();
+                testLocalStorage();
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 

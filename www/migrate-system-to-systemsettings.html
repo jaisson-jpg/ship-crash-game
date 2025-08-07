@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migrar System para SystemSettings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            background: #ffd700;
+            color: #1e3c72;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #ffed4e;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .result {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success { border-left: 4px solid #4CAF50; }
+        .error { border-left: 4px solid #f44336; }
+        .warning { border-left: 4px solid #ff9800; }
+        .info { border-left: 4px solid #2196F3; }
+        .step {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Migrar System para SystemSettings</h1>
+        <p>Esta página migra dados da coleção 'system' para 'systemSettings'.</p>
+        
+        <div class="step">
+            <h3>📋 Problema Identificado:</h3>
+            <p>O arquivo <code>auth-firebase-complete.js</code> estava criando documentos na coleção <code>system</code> em vez de <code>systemSettings</code>.</p>
+            <p>Esta migração corrige isso e move os dados para o local correto.</p>
+        </div>
+        
+        <div>
+            <button onclick="checkSystemCollection()">🔍 Verificar Coleção System</button>
+            <button onclick="migrateToSystemSettings()">🔄 Migrar para SystemSettings</button>
+            <button onclick="verifyMigration()">✅ Verificar Migração</button>
+            <button onclick="cleanupSystemCollection()">🗑️ Limpar Coleção System</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Firebase Config -->
+    <script src="js/firebase-config.js"></script>
+    
+    <script>
+        function addResult(title, content, type = 'info') {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = `<strong>${title}</strong>\n${content}`;
+            document.getElementById('results').appendChild(resultDiv);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        async function checkSystemCollection() {
+            clearResults();
+            addResult('🔍 Verificando Coleção System', 'Iniciando...', 'info');
+            
+            try {
+                // Verificar se existe coleção system
+                const systemDocs = await firebase.firestore().collection('system').get();
+                
+                if (systemDocs.empty) {
+                    addResult('✅ Coleção System Vazia', 'Não há documentos para migrar', 'success');
+                } else {
+                    addResult('📄 Documentos Encontrados na System', `${systemDocs.size} documentos encontrados`, 'warning');
+                    
+                    systemDocs.forEach(doc => {
+                        addResult(`📄 Documento: ${doc.id}`, JSON.stringify(doc.data(), null, 2), 'info');
+                    });
+                }
+                
+            } catch (error) {
+                addResult('❌ Erro ao Verificar System', error.message, 'error');
+            }
+        }
+        
+        async function migrateToSystemSettings() {
+            addResult('🔄 Iniciando Migração', 'Migrando dados de system para systemSettings...', 'info');
+            
+            try {
+                // Verificar documentos na coleção system
+                const systemDocs = await firebase.firestore().collection('system').get();
+                
+                if (systemDocs.empty) {
+                    addResult('✅ Nada para Migrar', 'Coleção system está vazia', 'success');
+                    return;
+                }
+                
+                let migratedCount = 0;
+                
+                for (const doc of systemDocs.docs) {
+                    const data = doc.data();
+                    
+                    if (doc.id === 'userCounter') {
+                        // Migrar userCounter
+                        const migratedData = {
+                            nextUserId: data.count || 100001,
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString(),
+                            migratedFrom: 'system'
+                        };
+                        
+                        await firebase.firestore().collection('systemSettings').doc('userCounter').set(migratedData);
+                        addResult('✅ userCounter Migrado', JSON.stringify(migratedData, null, 2), 'success');
+                        migratedCount++;
+                    }
+                }
+                
+                addResult('🎉 Migração Concluída', `${migratedCount} documentos migrados com sucesso!`, 'success');
+                
+            } catch (error) {
+                addResult('❌ Erro na Migração', error.message, 'error');
+            }
+        }
+        
+        async function verifyMigration() {
+            addResult('✅ Verificando Migração', 'Verificando se os dados foram migrados corretamente...', 'info');
+            
+            try {
+                // Verificar systemSettings
+                const userCounterDoc = await firebase.firestore().collection('systemSettings').doc('userCounter').get();
+                
+                if (userCounterDoc.exists) {
+                    const data = userCounterDoc.data();
+                    addResult('✅ userCounter em SystemSettings', JSON.stringify(data, null, 2), 'success');
+                } else {
+                    addResult('❌ userCounter Não Encontrado', 'Documento não foi migrado', 'error');
+                }
+                
+                // Verificar se ainda existe na system
+                const oldUserCounterDoc = await firebase.firestore().collection('system').doc('userCounter').get();
+                
+                if (oldUserCounterDoc.exists) {
+                    addResult('⚠️ userCounter Ainda Existe na System', 'Pode ser removido após verificação', 'warning');
+                } else {
+                    addResult('✅ userCounter Removido da System', 'Migração completa', 'success');
+                }
+                
+            } catch (error) {
+                addResult('❌ Erro na Verificação', error.message, 'error');
+            }
+        }
+        
+        async function cleanupSystemCollection() {
+            addResult('🗑️ Limpando Coleção System', 'Removendo documentos da coleção system...', 'info');
+            
+            try {
+                const systemDocs = await firebase.firestore().collection('system').get();
+                
+                if (systemDocs.empty) {
+                    addResult('✅ System Já Está Limpa', 'Nenhum documento para remover', 'success');
+                    return;
+                }
+                
+                let removedCount = 0;
+                
+                for (const doc of systemDocs.docs) {
+                    await firebase.firestore().collection('system').doc(doc.id).delete();
+                    addResult(`🗑️ Removido: ${doc.id}`, 'Documento removido da coleção system', 'success');
+                    removedCount++;
+                }
+                
+                addResult('🎉 Limpeza Concluída', `${removedCount} documentos removidos da coleção system`, 'success');
+                
+            } catch (error) {
+                addResult('❌ Erro na Limpeza', error.message, 'error');
+            }
+        }
+        
+        // Auto-executar verificação ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(checkSystemCollection, 1000);
+        });
+    </script>
+</body>
+</html> 

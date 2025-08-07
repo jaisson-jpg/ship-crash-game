@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Firestore - Verificação de Dados</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #0a0a0a;
+            color: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .warning { color: #ff9800; }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .log {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 3px;
+            border: 1px solid #333;
+            background: #1a1a1a;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste Firestore - Verificação de Dados</h1>
+    
+    <div class="test-section">
+        <h2>1. Verificar Usuário Atual</h2>
+        <button onclick="checkCurrentUser()">Verificar Usuário Logado</button>
+        <div id="currentUserStatus" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Buscar Dados no Firestore</h2>
+        <button onclick="fetchUserData()">Buscar Dados do Usuário</button>
+        <div id="firestoreData" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Verificar localStorage</h2>
+        <button onclick="checkLocalStorage()">Verificar localStorage</button>
+        <div id="localStorageData" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Teste de Login</h2>
+        <input type="email" id="testEmail" placeholder="Email" value="teste@teste.com">
+        <input type="password" id="testPassword" placeholder="Senha" value="123456">
+        <button onclick="testLogin()">Testar Login</button>
+        <div id="loginTestResult" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Navegação</h2>
+        <button onclick="goToIndex()">Ir para Index</button>
+        <button onclick="goToGame()">Ir para Game</button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-firebase-complete.js"></script>
+    
+    <script>
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'warning';
+            element.innerHTML += `[${timestamp}] <span class="${className}">${message}</span>\n`;
+            element.scrollTop = element.scrollHeight;
+        }
+        
+        function checkCurrentUser() {
+            const statusDiv = document.getElementById('currentUserStatus');
+            statusDiv.innerHTML = '';
+            
+            log('currentUserStatus', '=== VERIFICANDO USUÁRIO ATUAL ===', 'info');
+            
+            if (typeof firebase === 'undefined') {
+                log('currentUserStatus', '❌ Firebase não está carregado', 'error');
+                return;
+            }
+            
+            const currentUser = firebase.auth().currentUser;
+            if (currentUser) {
+                log('currentUserStatus', `✅ Usuário logado: ${currentUser.email}`, 'success');
+                log('currentUserStatus', `UID: ${currentUser.uid}`, 'info');
+                log('currentUserStatus', `Email verificado: ${currentUser.emailVerified}`, 'info');
+            } else {
+                log('currentUserStatus', '❌ Nenhum usuário logado', 'error');
+            }
+        }
+        
+        function fetchUserData() {
+            const dataDiv = document.getElementById('firestoreData');
+            dataDiv.innerHTML = '';
+            
+            log('firestoreData', '=== BUSCANDO DADOS NO FIRESTORE ===', 'info');
+            
+            if (typeof firebase === 'undefined') {
+                log('firestoreData', '❌ Firebase não está carregado', 'error');
+                return;
+            }
+            
+            const currentUser = firebase.auth().currentUser;
+            if (!currentUser) {
+                log('firestoreData', '❌ Nenhum usuário logado', 'error');
+                return;
+            }
+            
+            log('firestoreData', `Buscando dados para UID: ${currentUser.uid}`, 'info');
+            
+            firebase.firestore().collection('users').doc(currentUser.uid).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        log('firestoreData', '✅ Documento encontrado no Firestore', 'success');
+                        log('firestoreData', `Dados completos: ${JSON.stringify(userData, null, 2)}`, 'info');
+                        
+                        // Verificar campos específicos
+                        if (userData.numericId) {
+                            log('firestoreData', `✅ numericId: ${userData.numericId}`, 'success');
+                        } else {
+                            log('firestoreData', '❌ numericId não encontrado', 'error');
+                        }
+                        
+                        if (userData.fullName) {
+                            log('firestoreData', `✅ fullName: ${userData.fullName}`, 'success');
+                        } else {
+                            log('firestoreData', '❌ fullName não encontrado', 'error');
+                        }
+                        
+                        if (userData.balance !== undefined) {
+                            log('firestoreData', `✅ balance: ${userData.balance}`, 'success');
+                        } else {
+                            log('firestoreData', '❌ balance não encontrado', 'error');
+                        }
+                        
+                        if (userData.role) {
+                            log('firestoreData', `✅ role: ${userData.role}`, 'success');
+                        } else {
+                            log('firestoreData', '❌ role não encontrado', 'error');
+                        }
+                    } else {
+                        log('firestoreData', '❌ Documento não encontrado no Firestore', 'error');
+                        log('firestoreData', 'Isso pode indicar que o usuário não foi registrado corretamente', 'warning');
+                    }
+                })
+                .catch((error) => {
+                    log('firestoreData', `❌ Erro ao buscar dados: ${error.message}`, 'error');
+                });
+        }
+        
+        function checkLocalStorage() {
+            const dataDiv = document.getElementById('localStorageData');
+            dataDiv.innerHTML = '';
+            
+            log('localStorageData', '=== VERIFICANDO LOCALSTORAGE ===', 'info');
+            
+            const authToken = localStorage.getItem('crashGameAuthToken');
+            const loggedInUserStr = localStorage.getItem('crashGameLoggedInUser');
+            const userId = localStorage.getItem('crashGameUserId');
+            const balance = localStorage.getItem('crashGamePlayerBalance');
+            
+            if (authToken) {
+                log('localStorageData', `✅ authToken: ${authToken}`, 'success');
+            } else {
+                log('localStorageData', '❌ authToken não encontrado', 'error');
+            }
+            
+            if (loggedInUserStr) {
+                try {
+                    const userData = JSON.parse(loggedInUserStr);
+                    log('localStorageData', '✅ loggedInUser encontrado', 'success');
+                    log('localStorageData', `Dados: ${JSON.stringify(userData, null, 2)}`, 'info');
+                } catch (error) {
+                    log('localStorageData', `❌ Erro ao parsear loggedInUser: ${error.message}`, 'error');
+                }
+            } else {
+                log('localStorageData', '❌ loggedInUser não encontrado', 'error');
+            }
+            
+            if (userId) {
+                log('localStorageData', `✅ userId: ${userId}`, 'success');
+            } else {
+                log('localStorageData', '❌ userId não encontrado', 'error');
+            }
+            
+            if (balance) {
+                log('localStorageData', `✅ balance: ${balance}`, 'success');
+            } else {
+                log('localStorageData', '❌ balance não encontrado', 'error');
+            }
+        }
+        
+        function testLogin() {
+            const resultDiv = document.getElementById('loginTestResult');
+            resultDiv.innerHTML = '';
+            
+            log('loginTestResult', '=== TESTE DE LOGIN ===', 'info');
+            
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            
+            log('loginTestResult', `Tentando login com: ${email}`, 'info');
+            
+            if (typeof window.fazerLogin !== 'function') {
+                log('loginTestResult', '❌ Função fazerLogin não está disponível', 'error');
+                return;
+            }
+            
+            // Temporariamente substituir os elementos do DOM
+            const originalLoginEmail = document.getElementById('loginEmail');
+            const originalLoginPassword = document.getElementById('loginPassword');
+            
+            if (!originalLoginEmail || !originalLoginPassword) {
+                log('loginTestResult', '❌ Elementos de login não encontrados no DOM', 'error');
+                return;
+            }
+            
+            // Salvar valores originais
+            const originalEmailValue = originalLoginEmail.value;
+            const originalPasswordValue = originalLoginPassword.value;
+            
+            // Definir valores de teste
+            originalLoginEmail.value = email;
+            originalLoginPassword.value = password;
+            
+            try {
+                // Chamar a função de login
+                window.fazerLogin();
+                log('loginTestResult', '✅ Função fazerLogin chamada com sucesso', 'success');
+            } catch (error) {
+                log('loginTestResult', `❌ Erro ao chamar fazerLogin: ${error.message}`, 'error');
+            } finally {
+                // Restaurar valores originais
+                originalLoginEmail.value = originalEmailValue;
+                originalLoginPassword.value = originalPasswordValue;
+            }
+        }
+        
+        function goToIndex() {
+            window.location.href = 'index.html';
+        }
+        
+        function goToGame() {
+            window.location.href = 'game.html';
+        }
+        
+        // Verificação automática ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            log('currentUserStatus', 'Página carregada, verificando usuário...', 'info');
+            setTimeout(checkCurrentUser, 1000);
+        });
+    </script>
+</body>
+</html> 

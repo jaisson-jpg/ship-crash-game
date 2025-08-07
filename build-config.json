@@ -1,0 +1,10 @@
+{
+  "android": {
+    "release": {
+      "keystore": "shipcrash.keystore",
+      "storePassword": "shipcrash123",
+      "alias": "shipcrash",
+      "password": "shipcrash123"
+    }
+  }
+} 

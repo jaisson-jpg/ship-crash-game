@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aventura Marítima Crash</title> 
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* ESTILOS ADICIONAIS PARA DEMONSTRAÇÃO VISUAL */
+        /* É ALTAMENTE RECOMENDADO MOVER ESTES ESTILOS PARA SEU ARQUIVO css/styles.css */
+
+        .game-area {
+            position: relative; /* Crucial para o posicionamento absoluto de 'ship' e 'sea' */
+            width: 100%;
+            height: 300px; /* Altura da área de jogo, ajuste conforme necessário */
+            background-color: #87CEEB; /* Cor do céu */
+            overflow: hidden; /* Esconde partes do navio que saem da área */
+            border: 1px solid #ccc; /* Apenas para visualização da área */
+        }
+
+       #ship {
+    position: absolute;
+    left: -20px; /* Você pode ajustar isso se quiser que ele comece um pouco mais para dentro ou fora da tela */
+    /* bottom: 4%; */   /* << PROBLEMA ESTAVA AQUI */
+    bottom: 50%;   /* << CORRIGIDO: Para alinhar com um mar de 50% de altura */
+    z-index: 1;
+
+    width: 200px;
+    height: 150px; /* Este tamanho parece grande para uma game-area de 300px de altura.
+                      Se o navio ocupar metade da altura da game-area,
+                      e o mar também for metade, o navio vai cobrir todo o céu.
+                      Considere diminuir para algo como height: 75px; width: 100px; ou similar,
+                      a menos que queira um navio realmente grande. */
+
+    background-image: url('img/navio..png'); /* Verifique se este caminho está correto em relação à sua pasta css */
+                                          /* Se 'styles.css' está em 'css/' e 'img/' está na raiz, o caminho seria '../img/navio.png' */
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center; /* Se a imagem do navio não estiver rente à base do arquivo .png,
+                                     ele pode parecer flutuar um pouco. Tente 'center bottom'
+                                     para alinhar a imagem na base do div do navio. */
+
+    transition: transform 0.1s linear, bottom 0.8s ease-in-out, opacity 0.8s ease-in-out;
+    transform: translateX(0px) rotate(0deg);
+    opacity: 1;
+}
+
+/* Verifique também a altura do seu mar: */
+.sea {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;   /* Se o mar tem 50% de altura, o 'bottom' do #ship deve ser 50% */
+    background-color: #0077be;
+    z-index: 0;
+}
+
+/* Classe para quando o navio afundar (seu JS adiciona/remove essa classe) */
+#ship.sinking {
+    /* 'bottom' e 'opacity' são alterados pelo JavaScript ao adicionar esta classe
+       e pelas transições definidas em #ship. */
+
+    /* A rotação é aplicada aqui.
+       O translateX usa uma variável CSS '--ship-current-x' que o seu JavaScript
+       DEVE definir ANTES de adicionar a classe .sinking, para que o navio
+       afunde na sua última posição horizontal.
+       Exemplo no JS, antes de adicionar .sinking:
+       shipElement.style.setProperty('--ship-current-x', `${currentShipX}px`);
+    */
+    transform: translateX(var(--ship-current-x, 0px)) rotate(15deg);
+    opacity: 0;
+
+    /* Se a transição para o afundamento precisar ser diferente da transição normal,
+       você pode redefinir a propriedade 'transition' aqui. Por exemplo:
+       transition: transform 0.8s ease-in, bottom 0.8s ease-in, opacity 0.8s ease-in;
+       Mas geralmente, a transição definida em #ship já cobrirá isso. */
+}
+
+        .multiplier {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.5em; /* Aumentado para melhor visibilidade */
+            color: white;
+            text-shadow: 2px 2px 4px black;
+            z-index: 1; /* Acima do navio e do mar */
+        }
+
+        .status-message {
+            position: absolute;
+            top: 260px; /* Ajustado para não sobrepor o multiplicador */
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5em; /* Aumentado */
+            color: #FFD700; /* Cor de aviso/status */
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black;
+            z-index: 0;
+        }
+        .countdown {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: em;
+            color: white;
+            text-shadow: 2px 2px 4px black;
+            z-index: 1;
+        }
+
+    </style>
+</head>
+<body>
+    <button id="backToHomeBtn" class="btn-back-home">Lobby</button>
+
+    <button id="toggleMyHistoryBtn" class="btn btn-icon btn-small" title="Meu Histórico">&#8942;</button>
+
+    <div class="personal-history-outer-container" id="myPersonalHistoryContainer" style="display: none;">
+        <h3>Meu Histórico de Apostas</h3>
+        <div id="betHistory"></div>
+    </div>
+
+    <div class="top-bar">
+        <div class="user-id-field">
+            <p id="userIdDisplay">Usuário: Carregando...</p>
+        </div>
+        <div class="balance-field">
+            <div class="balance">
+                R$ <span id="playerBalance">0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="game-container">
+            <h1>Aventura Marítima</h1> 
+            <div class="game-area">
+                <div class="sea"></div> 
+                <div id="ship" class="ship"></div> 
+                <div id="multiplier" class="multiplier">1.00x</div>
+                <div id="status-message" class="status-message"></div>
+                <div id="countdownDisplay" class="countdown"></div>
+            </div>
+            <div class="controls">
+                <div class="control-group">
+                    <label for="betAmount" class="control-label">Quantia</label>
+                    <div class="bet-modifiers">
+                        <button id="halveBetBtn" class="btn btn-bet-modifier">1/2</button>
+                        <div class="bet-input">
+                            <input type="number" id="betAmount" value="1.00" min="1.00" step="0.01">
+                        </div>
+                        <button id="doubleBetBtn" class="btn btn-bet-modifier">2x</button>
+                    </div>
+                </div>
+
+                <div class="control-group auto-cashout-group">
+                    <input type="checkbox" id="enableAutoCashOut" class="auto-cashout-checkbox">
+                    <label for="enableAutoCashOut" class="auto-cashout-label-text">AUTO RETIRAR</label>
+                    <input type="number" id="autoCashOutMultiplierInput" value="1.50" min="1.01" step="0.01" class="auto-cashout-input-field">
+                    <span class="auto-cashout-x">x</span>
+                </div>
+
+                <div class="main-action-buttons">
+                    <button id="placeBetBtn" class="btn btn-principal place-bet">SE JUNTE</button>
+                    <button id="cashOutBtn" class="btn btn-principal cash-out" disabled>SAIR (0.00)</button>
+                </div>
+            </div>
+            <div class="history-container">
+                <div class="history-header-controls">
+                    <h3>Últimas Rodadas (Global)</h3>
+                </div>
+                <div id="gameHistory" class="history-list"></div>
+            </div>
+        </div>
+
+        <div class="real-time-feed-sidebar">
+            <h3>Apostas em Tempo Real</h3>
+            <div class="feed-table-header">
+                <span class="col-player">Jogador</span>
+                <span class="col-bet">Aposta</span>
+                <span class="col-multiplier">Pousar</span>
+                <span class="col-winnings">Vitória</span>
+            </div>
+            <div id="realTimeBetFeed" class="feed-list">
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Firebase Config -->
+    <script src="js/firebase-config.js"></script>
+    
+    <!-- Auth Utils -->
+    <script src="js/auth-utils.js"></script>
+    
+    <!-- Main Game Script -->
+    <script src="js/script-firebase.js"></script>
+</body>
+</html>

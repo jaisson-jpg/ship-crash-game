@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Documentos Firestore</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            background: #ffd700;
+            color: #1e3c72;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #ffed4e;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .result {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success { border-left: 4px solid #4CAF50; }
+        .error { border-left: 4px solid #f44336; }
+        .warning { border-left: 4px solid #ff9800; }
+        .info { border-left: 4px solid #2196F3; }
+        .step {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Criar Documentos Firestore</h1>
+        <p>Esta página cria automaticamente os documentos necessários no Firestore.</p>
+        
+        <div class="step">
+            <h3>📋 Passos:</h3>
+            <ol>
+                <li>Clique em "Verificar Status Atual"</li>
+                <li>Clique em "Criar Documento main"</li>
+                <li>Clique em "Criar Documento userCounter" (se necessário)</li>
+                <li>Clique em "Verificar Status Final"</li>
+            </ol>
+        </div>
+        
+        <div>
+            <button onclick="checkCurrentStatus()">🔍 Verificar Status Atual</button>
+            <button onclick="createMainDocument()">📄 Criar Documento main</button>
+            <button onclick="createUserCounterDocument()">🔢 Criar Documento userCounter</button>
+            <button onclick="checkFinalStatus()">✅ Verificar Status Final</button>
+            <button onclick="createAllDocuments()">🚀 Criar Todos os Documentos</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Firebase Config -->
+    <script src="js/firebase-config.js"></script>
+    
+    <script>
+        function addResult(title, content, type = 'info') {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = `<strong>${title}</strong>\n${content}`;
+            document.getElementById('results').appendChild(resultDiv);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        async function checkCurrentStatus() {
+            clearResults();
+            addResult('🔍 Verificando Status Atual', 'Iniciando...', 'info');
+            
+            try {
+                // Verificar documento main
+                const mainDoc = await firebase.firestore().collection('systemSettings').doc('main').get();
+                if (mainDoc.exists) {
+                    const data = mainDoc.data();
+                    addResult('✅ Documento main Existe', JSON.stringify(data, null, 2), 'success');
+                } else {
+                    addResult('❌ Documento main Não Existe', 'Precisa ser criado', 'error');
+                }
+                
+                // Verificar documento userCounter
+                const counterDoc = await firebase.firestore().collection('systemSettings').doc('userCounter').get();
+                if (counterDoc.exists) {
+                    const data = counterDoc.data();
+                    addResult('✅ Documento userCounter Existe', JSON.stringify(data, null, 2), 'success');
+                } else {
+                    addResult('❌ Documento userCounter Não Existe', 'Precisa ser criado', 'error');
+                }
+                
+            } catch (error) {
+                addResult('❌ Erro ao Verificar', error.message, 'error');
+            }
+        }
+        
+        async function createMainDocument() {
+            addResult('📄 Criando Documento main', 'Iniciando...', 'info');
+            
+            try {
+                const mainData = {
+                    initialBalance: 1000.00,
+                    systemStatus: "online",
+                    updatedAt: new Date().toISOString(),
+                    createdBy: "auto-script"
+                };
+                
+                await firebase.firestore().collection('systemSettings').doc('main').set(mainData);
+                addResult('✅ Documento main Criado', JSON.stringify(mainData, null, 2), 'success');
+                
+            } catch (error) {
+                addResult('❌ Erro ao Criar main', error.message, 'error');
+            }
+        }
+        
+        async function createUserCounterDocument() {
+            addResult('🔢 Criando Documento userCounter', 'Iniciando...', 'info');
+            
+            try {
+                const counterData = {
+                    nextUserId: 100001,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    createdBy: "auto-script"
+                };
+                
+                await firebase.firestore().collection('systemSettings').doc('userCounter').set(counterData);
+                addResult('✅ Documento userCounter Criado', JSON.stringify(counterData, null, 2), 'success');
+                
+            } catch (error) {
+                addResult('❌ Erro ao Criar userCounter', error.message, 'error');
+            }
+        }
+        
+        async function checkFinalStatus() {
+            addResult('✅ Verificando Status Final', 'Iniciando...', 'info');
+            
+            try {
+                // Verificar documento main
+                const mainDoc = await firebase.firestore().collection('systemSettings').doc('main').get();
+                if (mainDoc.exists) {
+                    const data = mainDoc.data();
+                    addResult('✅ Documento main OK', JSON.stringify(data, null, 2), 'success');
+                } else {
+                    addResult('❌ Documento main Ainda Não Existe', 'Crie o documento primeiro', 'error');
+                }
+                
+                // Verificar documento userCounter
+                const counterDoc = await firebase.firestore().collection('systemSettings').doc('userCounter').get();
+                if (counterDoc.exists) {
+                    const data = counterDoc.data();
+                    addResult('✅ Documento userCounter OK', JSON.stringify(data, null, 2), 'success');
+                } else {
+                    addResult('❌ Documento userCounter Ainda Não Existe', 'Crie o documento primeiro', 'error');
+                }
+                
+                // Resumo
+                const mainExists = mainDoc.exists;
+                const counterExists = counterDoc.exists;
+                
+                if (mainExists && counterExists) {
+                    addResult('🎉 Status Final', 'Todos os documentos estão criados e funcionando!', 'success');
+                } else {
+                    addResult('⚠️ Status Final', 'Alguns documentos ainda precisam ser criados', 'warning');
+                }
+                
+            } catch (error) {
+                addResult('❌ Erro na Verificação Final', error.message, 'error');
+            }
+        }
+        
+        async function createAllDocuments() {
+            clearResults();
+            addResult('🚀 Criando Todos os Documentos', 'Iniciando...', 'info');
+            
+            try {
+                // Criar documento main
+                const mainData = {
+                    initialBalance: 1000.00,
+                    systemStatus: "online",
+                    updatedAt: new Date().toISOString(),
+                    createdBy: "auto-script"
+                };
+                
+                await firebase.firestore().collection('systemSettings').doc('main').set(mainData);
+                addResult('✅ Documento main Criado', JSON.stringify(mainData, null, 2), 'success');
+                
+                // Criar documento userCounter
+                const counterData = {
+                    nextUserId: 100001,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    createdBy: "auto-script"
+                };
+                
+                await firebase.firestore().collection('systemSettings').doc('userCounter').set(counterData);
+                addResult('✅ Documento userCounter Criado', JSON.stringify(counterData, null, 2), 'success');
+                
+                addResult('🎉 Concluído', 'Todos os documentos foram criados com sucesso!', 'success');
+                
+            } catch (error) {
+                addResult('❌ Erro ao Criar Documentos', error.message, 'error');
+            }
+        }
+        
+        // Auto-executar verificação ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(checkCurrentStatus, 1000);
+        });
+    </script>
+</body>
+</html> 

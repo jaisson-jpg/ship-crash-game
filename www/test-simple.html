@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Simples - Funções de Autenticação</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #0a0a0a;
+            color: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .warning { color: #ff9800; }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .log {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste Simples - Funções de Autenticação</h1>
+    
+    <div class="test-section">
+        <h2>1. Verificação Imediata</h2>
+        <button onclick="checkFunctions()">Verificar Funções</button>
+        <div id="functionStatus" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Teste de Login Simples</h2>
+        <input type="email" id="loginEmail" placeholder="Email" value="teste@teste.com">
+        <input type="password" id="loginPassword" placeholder="Senha" value="123456">
+        <button onclick="testLogin()">Testar Login</button>
+        <div id="loginResult" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Navegação</h2>
+        <button onclick="goToIndex()">Ir para Index</button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-firebase-complete.js"></script>
+    
+    <script>
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'warning';
+            element.innerHTML += `[${timestamp}] <span class="${className}">${message}</span>\n`;
+            element.scrollTop = element.scrollHeight;
+        }
+        
+        function checkFunctions() {
+            const statusDiv = document.getElementById('functionStatus');
+            statusDiv.innerHTML = '';
+            
+            log('functionStatus', '=== VERIFICAÇÃO IMEDIATA ===', 'info');
+            
+            // Verificar Firebase
+            if (typeof firebase !== 'undefined') {
+                log('functionStatus', '✅ Firebase carregado', 'success');
+            } else {
+                log('functionStatus', '❌ Firebase não carregado', 'error');
+            }
+            
+            // Verificar funções de autenticação
+            if (typeof window.fazerLogin === 'function') {
+                log('functionStatus', '✅ fazerLogin disponível', 'success');
+            } else {
+                log('functionStatus', '❌ fazerLogin não disponível', 'error');
+            }
+            
+            if (typeof window.fazerRegistro === 'function') {
+                log('functionStatus', '✅ fazerRegistro disponível', 'success');
+            } else {
+                log('functionStatus', '❌ fazerRegistro não disponível', 'error');
+            }
+            
+            // Verificar elementos do DOM
+            const loginEmail = document.getElementById('loginEmail');
+            const loginPassword = document.getElementById('loginPassword');
+            
+            if (loginEmail) {
+                log('functionStatus', '✅ Elemento loginEmail encontrado', 'success');
+            } else {
+                log('functionStatus', '❌ Elemento loginEmail não encontrado', 'error');
+            }
+            
+            if (loginPassword) {
+                log('functionStatus', '✅ Elemento loginPassword encontrado', 'success');
+            } else {
+                log('functionStatus', '❌ Elemento loginPassword não encontrado', 'error');
+            }
+        }
+        
+        function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = '';
+            
+            log('loginResult', '=== TESTE DE LOGIN ===', 'info');
+            
+            if (typeof window.fazerLogin !== 'function') {
+                log('loginResult', '❌ Função fazerLogin não está disponível', 'error');
+                return;
+            }
+            
+            log('loginResult', '✅ Função fazerLogin disponível, chamando...', 'success');
+            
+            try {
+                window.fazerLogin();
+                log('loginResult', '✅ Função fazerLogin chamada com sucesso', 'success');
+            } catch (error) {
+                log('loginResult', `❌ Erro ao chamar fazerLogin: ${error.message}`, 'error');
+            }
+        }
+        
+        function goToIndex() {
+            window.location.href = 'index.html';
+        }
+        
+        // Verificação automática ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            log('functionStatus', 'Página carregada, verificando funções...', 'info');
+            setTimeout(checkFunctions, 500);
+        });
+    </script>
+</body>
+</html> 

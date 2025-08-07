@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; 
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+        font-src 'self' https://fonts.gstatic.com data:; 
+        script-src 'self' 'unsafe-inline' 'unsafe-eval'; 
+        img-src 'self' data: content: file:; 
+        media-src *; 
+        connect-src 'self' https://dd5c-2804-5b40-aa51-5d00-a5cb-c85d-8daa-980b.ngrok-free.app wss://dd5c-2804-5b40-aa51-5d00-a5cb-c85d-8daa-980b.ngrok-free.app;
+    ">
+    <title>Detalhes de Transações - Promotor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Poppins', sans-serif; background-color: #12122c; color: #e0e0e0; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
+        .container { background-color: #1e1e3e; padding: 20px; border-radius: 10px; width: 100%; max-width: 500px; margin-top: 10px; }
+        h1 { color: #8a8aff; text-align: center; margin-bottom: 20px; font-size: 1.5em; }
+        .back-button { background-color: #5a5a8a; color: #e0e0e0; margin-bottom:15px; width: auto; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; align-self: flex-start; }
+        .back-button:hover { background-color: #6a6aff; }
+        
+        .transaction-list { list-style: none; padding: 0; }
+        .transaction-item { background-color: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+        .transaction-item div { margin-bottom: 4px; }
+        .transaction-item .date { font-size: 0.8em; color: #aaa; }
+        .transaction-item .details { font-size: 0.95em; }
+        .transaction-item .amount { font-weight: bold; }
+        .transaction-item .sent .amount { color: #28a745; /* Verde para enviado */ }
+        .transaction-item .withdrawn .amount { color: #dc3545; /* Vermelho para retirado */ }
+        .transaction-item .credit .amount { color: #17a2b8; /* Azul para crédito de admin */}
+
+        .loading, .no-transactions { text-align: center; margin-top: 20px; color: #aaa; }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='promotor.html'">Voltar ao Painel</button>
+
+    <div class="container">
+        <h1>Detalhes das Transações</h1>
+        <div id="promoterInfoForTransactions" style="text-align: center; margin-bottom: 15px; font-size:0.9em; color: #ccc;">
+            Promotor ID: <span id="displayPromoterId"></span>
+        </div>
+        <ul id="transactionList" class="transaction-list">
+            <p id="loadingMessage" class="loading">Carregando transações...</p>
+            </ul>
+    </div>
+
+    <script>
+        // <<< IMPORTANTE: ATUALIZE ESTA URL COM SEU NGROK ATUAL >>>
+        const backendUrl = 'https://dd5c-2804-5b40-aa51-5d00-a5cb-c85d-8daa-980b.ngrok-free.app'; 
+        const promoterIdKey = 'crashGameUserId'; // ID do promotor logado
+        const authTokenKey = 'crashGameAuthToken'; 
+        const userRoleKey = 'crashGameUserRole';
+
+        const transactionListEl = document.getElementById('transactionList');
+        const loadingMessageEl = document.getElementById('loadingMessage');
+        const displayPromoterIdEl = document.getElementById('displayPromoterId');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem(authTokenKey);
+            const role = localStorage.getItem(userRoleKey);
+            const promoterId = localStorage.getItem(promoterIdKey);
+
+            if (!token || role !== 'promoter' || !promoterId) {
+                console.log("DETALHES: Usuário não é promotor, não está logado ou ID não encontrado. Redirecionando...");
+                window.location.href = 'index.html';
+                return;
+            }
+            if(displayPromoterIdEl) displayPromoterIdEl.textContent = promoterId;
+            fetchTransactions(promoterId);
+        });
+
+        async function fetchTransactions(promoterId) {
+            loadingMessageEl.style.display = 'block';
+            transactionListEl.innerHTML = ''; // Limpa lista antiga
+
+            try {
+                const response = await fetch(`${backendUrl}/api/promoter/transactions/${promoterId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Se você implementar autenticação de token nas rotas GET, adicione aqui:
+                        // 'Authorization': `Bearer ${localStorage.getItem(authTokenKey)}`
+                    }
+                });
+
+                if (response.ok) {
+                    const transactions = await response.json();
+                    loadingMessageEl.style.display = 'none';
+                    if (transactions.length === 0) {
+                        transactionListEl.innerHTML = '<p class="no-transactions">Nenhuma transação encontrada.</p>';
+                    } else {
+                        renderTransactions(transactions);
+                    }
+                } else {
+                    const errorData = await response.json();
+                    loadingMessageEl.textContent = `Erro ao buscar transações: ${errorData.error || response.status}`;
+                    console.error("Erro ao buscar transações:", errorData);
+                }
+            } catch (error) {
+                loadingMessageEl.textContent = 'Erro de comunicação ao buscar transações.';
+                console.error('Erro na requisição de transações:', error);
+            }
+        }
+
+        function renderTransactions(transactions) {
+            transactions.forEach(tx => {
+                const item = document.createElement('li');
+                item.classList.add('transaction-item');
+
+                let typeClass = '';
+                let description = '';
+                let amountDisplay = `R$ ${Math.abs(tx.amount).toFixed(2)}`; // Valor absoluto
+
+                if (tx.type === 'promoter_sell_chips') {
+                    typeClass = 'sent';
+                    description = `Enviado para ID ${tx.details.toTargetUserId || 'N/A'}`;
+                } else if (tx.type === 'promoter_collect_chips') {
+                    typeClass = 'withdrawn';
+                    description = `Retirada do ID ${tx.details.fromTargetUserId || 'N/A'}`;
+                } else if (tx.type === 'promoter_credit_by_admin') {
+                    typeClass = 'credit';
+                    description = `Crédito recebido do Admin ID ${tx.details.adminId || 'Sistema'}`;
+                } else {
+                    description = `Tipo: ${tx.type}`; // Fallback
+                }
+                item.classList.add(typeClass);
+
+                const date = new Date(tx.timestamp).toLocaleString('pt-BR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric', 
+                    hour: '2-digit', minute: '2-digit' 
+                });
+
+                item.innerHTML = `
+                    <div class="date">${date}</div>
+                    <div class="details">${description}</div>
+                    <div class="amount">${amountDisplay}</div>
+                `;
+                transactionListEl.appendChild(item);
+            });
+        }
+    </script>
+</body>
+</html>

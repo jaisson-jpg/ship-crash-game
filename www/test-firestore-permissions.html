@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Permissões Firestore</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #0a0a0a;
+            color: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .warning { color: #ff9800; }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .log {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 3px;
+            border: 1px solid #333;
+            background: #1a1a1a;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Teste Permissões Firestore</h1>
+    
+    <div class="test-section">
+        <h2>1. Verificar Configuração Firebase</h2>
+        <button onclick="checkFirebaseConfig()">Verificar Configuração</button>
+        <div id="firebaseConfig" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Teste de Autenticação</h2>
+        <input type="email" id="testEmail" placeholder="Email" value="teste@teste.com">
+        <input type="password" id="testPassword" placeholder="Senha" value="123456">
+        <button onclick="testAuth()">Testar Autenticação</button>
+        <div id="authTest" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Teste de Leitura Firestore</h2>
+        <button onclick="testFirestoreRead()">Testar Leitura</button>
+        <div id="firestoreRead" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Teste de Escrita Firestore</h2>
+        <button onclick="testFirestoreWrite()">Testar Escrita</button>
+        <div id="firestoreWrite" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Verificar Regras Atuais</h2>
+        <button onclick="checkCurrentRules()">Verificar Regras</button>
+        <div id="currentRules" class="log"></div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <script src="js/firebase-config.js"></script>
+    
+    <script>
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'warning';
+            element.innerHTML += `[${timestamp}] <span class="${className}">${message}</span>\n`;
+            element.scrollTop = element.scrollHeight;
+        }
+        
+        function checkFirebaseConfig() {
+            const configDiv = document.getElementById('firebaseConfig');
+            configDiv.innerHTML = '';
+            
+            log('firebaseConfig', '=== VERIFICANDO CONFIGURAÇÃO FIREBASE ===', 'info');
+            
+            if (typeof firebase === 'undefined') {
+                log('firebaseConfig', '❌ Firebase não está carregado', 'error');
+                return;
+            }
+            
+            log('firebaseConfig', '✅ Firebase carregado', 'success');
+            
+            // Verificar configuração
+            if (firebase.apps && firebase.apps.length > 0) {
+                const app = firebase.apps[0];
+                log('firebaseConfig', `✅ App inicializado: ${app.name}`, 'success');
+                log('firebaseConfig', `Project ID: ${app.options.projectId}`, 'info');
+            }
+            
+            // Verificar Auth
+            if (firebase.auth) {
+                log('firebaseConfig', '✅ Firebase Auth disponível', 'success');
+            } else {
+                log('firebaseConfig', '❌ Firebase Auth não disponível', 'error');
+            }
+            
+            // Verificar Firestore
+            if (firebase.firestore) {
+                log('firebaseConfig', '✅ Firebase Firestore disponível', 'success');
+            } else {
+                log('firebaseConfig', '❌ Firebase Firestore não disponível', 'error');
+            }
+        }
+        
+        function testAuth() {
+            const authDiv = document.getElementById('authTest');
+            authDiv.innerHTML = '';
+            
+            log('authTest', '=== TESTE DE AUTENTICAÇÃO ===', 'info');
+            
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            
+            log('authTest', `Tentando login com: ${email}`, 'info');
+            
+            firebase.auth().signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    log('authTest', `✅ Login realizado com sucesso`, 'success');
+                    log('authTest', `UID: ${user.uid}`, 'info');
+                    log('authTest', `Email: ${user.email}`, 'info');
+                    log('authTest', `Email verificado: ${user.emailVerified}`, 'info');
+                })
+                .catch((error) => {
+                    log('authTest', `❌ Erro no login: ${error.message}`, 'error');
+                    log('authTest', `Código do erro: ${error.code}`, 'error');
+                });
+        }
+        
+        function testFirestoreRead() {
+            const readDiv = document.getElementById('firestoreRead');
+            readDiv.innerHTML = '';
+            
+            log('firestoreRead', '=== TESTE DE LEITURA FIRESTORE ===', 'info');
+            
+            const currentUser = firebase.auth().currentUser;
+            if (!currentUser) {
+                log('firestoreRead', '❌ Nenhum usuário logado', 'error');
+                return;
+            }
+            
+            log('firestoreRead', `Buscando dados para UID: ${currentUser.uid}`, 'info');
+            
+            firebase.firestore().collection('users').doc(currentUser.uid).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        log('firestoreRead', '✅ Documento encontrado', 'success');
+                        log('firestoreRead', `Dados: ${JSON.stringify(data, null, 2)}`, 'info');
+                    } else {
+                        log('firestoreRead', '❌ Documento não encontrado', 'error');
+                        log('firestoreRead', 'Isso pode indicar problema de permissões ou documento não existe', 'warning');
+                    }
+                })
+                .catch((error) => {
+                    log('firestoreRead', `❌ Erro ao ler documento: ${error.message}`, 'error');
+                    log('firestoreRead', `Código do erro: ${error.code}`, 'error');
+                    
+                    if (error.code === 'permission-denied') {
+                        log('firestoreRead', '🔒 PROBLEMA DE PERMISSÕES DETECTADO', 'error');
+                        log('firestoreRead', 'Verifique as regras do Firestore no Firebase Console', 'warning');
+                    }
+                });
+        }
+        
+        function testFirestoreWrite() {
+            const writeDiv = document.getElementById('firestoreWrite');
+            writeDiv.innerHTML = '';
+            
+            log('firestoreWrite', '=== TESTE DE ESCRITA FIRESTORE ===', 'info');
+            
+            const currentUser = firebase.auth().currentUser;
+            if (!currentUser) {
+                log('firestoreWrite', '❌ Nenhum usuário logado', 'error');
+                return;
+            }
+            
+            const testData = {
+                testField: 'teste_' + Date.now(),
+                timestamp: new Date().toISOString(),
+                userId: currentUser.uid
+            };
+            
+            log('firestoreWrite', `Tentando escrever dados de teste...`, 'info');
+            
+            firebase.firestore().collection('users').doc(currentUser.uid).update(testData)
+                .then(() => {
+                    log('firestoreWrite', '✅ Escrita realizada com sucesso', 'success');
+                    log('firestoreWrite', `Dados escritos: ${JSON.stringify(testData, null, 2)}`, 'info');
+                })
+                .catch((error) => {
+                    log('firestoreWrite', `❌ Erro ao escrever: ${error.message}`, 'error');
+                    log('firestoreWrite', `Código do erro: ${error.code}`, 'error');
+                    
+                    if (error.code === 'permission-denied') {
+                        log('firestoreWrite', '🔒 PROBLEMA DE PERMISSÕES DETECTADO', 'error');
+                        log('firestoreWrite', 'Verifique as regras do Firestore no Firebase Console', 'warning');
+                    }
+                });
+        }
+        
+        function checkCurrentRules() {
+            const rulesDiv = document.getElementById('currentRules');
+            rulesDiv.innerHTML = '';
+            
+            log('currentRules', '=== VERIFICAÇÃO DE REGRAS ===', 'info');
+            log('currentRules', 'Para verificar as regras atuais:', 'info');
+            log('currentRules', '1. Acesse: https://console.firebase.google.com', 'info');
+            log('currentRules', '2. Selecione seu projeto', 'info');
+            log('currentRules', '3. Vá para Firestore Database', 'info');
+            log('currentRules', '4. Clique na aba "Rules"', 'info');
+            log('currentRules', '5. Verifique se as regras permitem acesso', 'info');
+            log('currentRules', '', 'info');
+            log('currentRules', 'Regras recomendadas para teste:', 'warning');
+            log('currentRules', 'rules_version = \'2\';', 'warning');
+            log('currentRules', 'service cloud.firestore {', 'warning');
+            log('currentRules', '  match /databases/{database}/documents {', 'warning');
+            log('currentRules', '    match /{document=**} {', 'warning');
+            log('currentRules', '      allow read, write: if true;', 'warning');
+            log('currentRules', '    }', 'warning');
+            log('currentRules', '  }', 'warning');
+            log('currentRules', '}', 'warning');
+        }
+        
+        // Verificação automática ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            log('firebaseConfig', 'Página carregada, verificando configuração...', 'info');
+            setTimeout(checkFirebaseConfig, 1000);
+        });
+    </script>
+</body>
+</html> 

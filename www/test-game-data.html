@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Dados do Jogo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #0a0a0a;
+            color: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .warning { color: #ff9800; }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .log {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .data-display {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        .data-item {
+            margin: 5px 0;
+            padding: 5px;
+            background: #2a2a2a;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 Teste Dados do Jogo</h1>
+    
+    <div class="test-section">
+        <h2>1. Verificar Autenticação</h2>
+        <button onclick="checkAuth()">Verificar Autenticação</button>
+        <div id="authStatus" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Simular Carregamento do Jogo</h2>
+        <button onclick="simulateGameLoad()">Simular Carregamento</button>
+        <div id="gameLoadStatus" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Verificar Elementos DOM</h2>
+        <button onclick="checkDOMElements()">Verificar Elementos</button>
+        <div id="domStatus" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Dados do Usuário Atual</h2>
+        <div id="userDataDisplay" class="data-display">
+            <div class="data-item">ID: <span id="currentUserId">Carregando...</span></div>
+            <div class="data-item">Nome: <span id="currentUserName">Carregando...</span></div>
+            <div class="data-item">Saldo: <span id="currentUserBalance">Carregando...</span></div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. Navegação</h2>
+        <button onclick="goToGame()">Ir para Game</button>
+        <button onclick="goToIndex()">Ir para Index</button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <script src="js/firebase-config.js"></script>
+    
+    <script>
+        let userId = null;
+        let playerFullName = '';
+        let playerBalance = 0.00;
+        
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'warning';
+            element.innerHTML += `[${timestamp}] <span class="${className}">${message}</span>\n`;
+            element.scrollTop = element.scrollHeight;
+        }
+        
+        function updateUserDataDisplay() {
+            document.getElementById('currentUserId').textContent = userId || 'N/A';
+            document.getElementById('currentUserName').textContent = playerFullName || 'N/A';
+            document.getElementById('currentUserBalance').textContent = playerBalance ? `R$ ${playerBalance.toFixed(2)}` : 'R$ 0.00';
+        }
+        
+        function checkAuth() {
+            const statusDiv = document.getElementById('authStatus');
+            statusDiv.innerHTML = '';
+            
+            log('authStatus', '=== VERIFICANDO AUTENTICAÇÃO ===', 'info');
+            
+            if (typeof firebase === 'undefined') {
+                log('authStatus', '❌ Firebase não está carregado', 'error');
+                return;
+            }
+            
+            const currentUser = firebase.auth().currentUser;
+            if (currentUser) {
+                log('authStatus', `✅ Usuário logado no Firebase: ${currentUser.email}`, 'success');
+                log('authStatus', `UID: ${currentUser.uid}`, 'info');
+            } else {
+                log('authStatus', '❌ Nenhum usuário logado no Firebase', 'error');
+            }
+            
+            const authToken = localStorage.getItem('crashGameAuthToken');
+            const loggedInUserStr = localStorage.getItem('crashGameLoggedInUser');
+            
+            if (authToken) {
+                log('authStatus', `✅ Auth token encontrado: ${authToken}`, 'success');
+            } else {
+                log('authStatus', '❌ Auth token não encontrado', 'error');
+            }
+            
+            if (loggedInUserStr) {
+                try {
+                    const userData = JSON.parse(loggedInUserStr);
+                    log('authStatus', '✅ Dados do usuário encontrados no localStorage', 'success');
+                    log('authStatus', `Dados: ${JSON.stringify(userData, null, 2)}`, 'info');
+                } catch (error) {
+                    log('authStatus', `❌ Erro ao parsear dados do localStorage: ${error.message}`, 'error');
+                }
+            } else {
+                log('authStatus', '❌ Dados do usuário não encontrados no localStorage', 'error');
+            }
+        }
+        
+        function simulateGameLoad() {
+            const statusDiv = document.getElementById('gameLoadStatus');
+            statusDiv.innerHTML = '';
+            
+            log('gameLoadStatus', '=== SIMULANDO CARREGAMENTO DO JOGO ===', 'info');
+            
+            // Simular a função checkAuthAndContinue do script-firebase.js
+            log('gameLoadStatus', '1. Verificando autenticação...', 'info');
+            
+            if (typeof firebase === 'undefined') {
+                log('gameLoadStatus', '❌ Firebase não está carregado!', 'error');
+                return;
+            }
+            
+            const currentUser = firebase.auth().currentUser;
+            if (currentUser) {
+                log('gameLoadStatus', '✅ Usuário logado no Firebase, buscando dados...', 'success');
+                
+                // Simular initializeGame
+                firebase.firestore().collection('users').doc(currentUser.uid).get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const userData = doc.data();
+                            log('gameLoadStatus', '✅ Dados encontrados no Firestore', 'success');
+                            log('gameLoadStatus', `Dados: ${JSON.stringify(userData, null, 2)}`, 'info');
+                            
+                            // Definir dados do usuário
+                            userId = userData.numericId || currentUser.uid;
+                            playerFullName = userData.fullName || '';
+                            playerBalance = userData.balance || 0;
+                            
+                            log('gameLoadStatus', '✅ Dados do usuário definidos:', 'success');
+                            log('gameLoadStatus', `- userId: ${userId}`, 'info');
+                            log('gameLoadStatus', `- playerFullName: ${playerFullName}`, 'info');
+                            log('gameLoadStatus', `- playerBalance: ${playerBalance}`, 'info');
+                            
+                            // Atualizar localStorage
+                            localStorage.setItem('crashGameUserId', userId.toString());
+                            localStorage.setItem('crashGamePlayerBalance', playerBalance.toString());
+                            localStorage.setItem('crashGameAuthToken', 'authenticated');
+                            localStorage.setItem('crashGameLoggedInUser', JSON.stringify({
+                                userId: userId,
+                                fullName: playerFullName,
+                                balance: playerBalance,
+                                role: userData.role || 'player'
+                            }));
+                            
+                            log('gameLoadStatus', '✅ localStorage atualizado', 'success');
+                            updateUserDataDisplay();
+                            
+                        } else {
+                            log('gameLoadStatus', '❌ Dados não encontrados no Firestore', 'error');
+                            // Fallback para localStorage
+                            simulateLocalStorageLoad();
+                        }
+                    })
+                    .catch((error) => {
+                        log('gameLoadStatus', `❌ Erro ao buscar dados: ${error.message}`, 'error');
+                        // Fallback para localStorage
+                        simulateLocalStorageLoad();
+                    });
+            } else {
+                log('gameLoadStatus', '❌ Usuário não logado no Firebase', 'error');
+                // Fallback para localStorage
+                simulateLocalStorageLoad();
+            }
+        }
+        
+        function simulateLocalStorageLoad() {
+            log('gameLoadStatus', '🔄 Tentando carregar dados do localStorage...', 'warning');
+            
+            try {
+                const loggedInUserStr = localStorage.getItem('crashGameLoggedInUser');
+                if (loggedInUserStr) {
+                    const loggedInUser = JSON.parse(loggedInUserStr);
+                    log('gameLoadStatus', '✅ Dados encontrados no localStorage', 'success');
+                    log('gameLoadStatus', `Dados: ${JSON.stringify(loggedInUser, null, 2)}`, 'info');
+                    
+                    userId = loggedInUser.userId.toString();
+                    playerFullName = loggedInUser.fullName || '';
+                    playerBalance = parseFloat(localStorage.getItem('crashGamePlayerBalance') || '0.00');
+                    
+                    log('gameLoadStatus', '✅ Dados do usuário definidos via localStorage:', 'success');
+                    log('gameLoadStatus', `- userId: ${userId}`, 'info');
+                    log('gameLoadStatus', `- playerFullName: ${playerFullName}`, 'info');
+                    log('gameLoadStatus', `- playerBalance: ${playerBalance}`, 'info');
+                    
+                    updateUserDataDisplay();
+                } else {
+                    log('gameLoadStatus', '❌ Dados não encontrados no localStorage', 'error');
+                }
+            } catch(e) {
+                log('gameLoadStatus', `❌ Erro ao carregar dados do localStorage: ${e.message}`, 'error');
+            }
+        }
+        
+        function checkDOMElements() {
+            const statusDiv = document.getElementById('domStatus');
+            statusDiv.innerHTML = '';
+            
+            log('domStatus', '=== VERIFICANDO ELEMENTOS DOM ===', 'info');
+            
+            // Simular elementos que existem no game.html
+            const mockElements = {
+                'userIdDisplay': 'Elemento para exibir ID/Nome do usuário',
+                'playerBalanceSpan': 'Elemento para exibir saldo',
+                'ship': 'Elemento do navio',
+                'multiplier': 'Elemento do multiplicador',
+                'betAmount': 'Input da aposta',
+                'placeBetBtn': 'Botão de fazer aposta',
+                'cashOutBtn': 'Botão de sair'
+            };
+            
+            log('domStatus', 'Elementos que devem existir no game.html:', 'info');
+            for (const [elementId, description] of Object.entries(mockElements)) {
+                log('domStatus', `- ${elementId}: ${description}`, 'info');
+            }
+            
+            log('domStatus', '', 'info');
+            log('domStatus', 'Para verificar se os elementos existem no game.html:', 'warning');
+            log('domStatus', '1. Abra o console do navegador (F12)', 'warning');
+            log('domStatus', '2. Digite: document.getElementById("userIdDisplay")', 'warning');
+            log('domStatus', '3. Digite: document.getElementById("playerBalanceSpan")', 'warning');
+            log('domStatus', '4. Se retornar null, o elemento não existe', 'warning');
+        }
+        
+        function goToGame() {
+            window.location.href = 'game.html';
+        }
+        
+        function goToIndex() {
+            window.location.href = 'index.html';
+        }
+        
+        // Verificação automática ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            log('authStatus', 'Página carregada, verificando autenticação...', 'info');
+            setTimeout(checkAuth, 1000);
+        });
+    </script>
+</body>
+</html> 

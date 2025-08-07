@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval'; 
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+        font-src 'self' https://fonts.gstatic.com data:; 
+        script-src 'self' 'unsafe-inline' 'unsafe-eval'; 
+        img-src 'self' data: content: file:; 
+        media-src *; 
+        connect-src 'self' https://dd5c-2804-5b40-aa51-5d00-a5cb-c85d-8daa-980b.ngrok-free.app wss://dd5c-2804-5b40-aa51-5d00-a5cb-c85d-8daa-980b.ngrok-free.app;
+    ">
+    <title>Vender DINDIN - Promotor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Poppins', sans-serif; background-color: #12122c; color: #e0e0e0; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
+        .container { background-color: #1e1e3e; padding: 20px; border-radius: 10px; width: 100%; max-width: 450px; margin-top: 20px; }
+        h1 { color: #8a8aff; text-align: center; margin-bottom: 20px; }
+        label { display: block; margin-top: 10px; margin-bottom: 5px; text-align: left; }
+        input[type="number"], input[type="text"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #5a5a8a; background-color: #2a2a4a; color: #fff; }
+        button { padding: 12px 20px; border: none; border-radius: 5px; background-color: #8a8aff; color: #1a1a2e; cursor: pointer; font-weight: bold; font-size: 1em; width: 100%; transition: background-color 0.3s ease; }
+        button:hover { background-color: #6a6aff; }
+        .back-button { background-color: #5a5a8a; margin-bottom:20px; width: auto; padding: 8px 15px; }
+        .message { margin-top: 15px; padding: 10px; border-radius: 5px; text-align: center; }
+        .message.success { background-color: #28a745; color: white; }
+        .message.error { background-color: #dc3545; color: white; }
+        .promoter-info { font-size: 0.9em; margin-bottom: 15px; background-color: #2a2a4a; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='promotor.html'">Voltar ao Painel</button>
+
+    <div class="container">
+        <h1>Vender DINDIN</h1>
+
+        <div class="promoter-info">
+            Seu ID: <span id="currentPromoterId"></span> | Seu Saldo de Sistema: R$ <span id="currentPromoterBalance"></span>
+        </div>
+
+        <div>
+            <label for="targetUserId">ID do Jogador Alvo:</label>
+            <input type="number" id="targetUserId" placeholder="Digite o ID do jogador">
+        </div>
+        <div>
+            <label for="amount">Quantidade de DINDIN para Vender:</label>
+            <input type="number" id="amount" placeholder="Digite a quantidade">
+        </div>
+        <button onclick="sellChips()">ENVIAR DINDIN</button>
+        <div id="responseMessage" class="message" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Chaves do localStorage
+        const backendUrl = 'https://dd5c-2804-5b40-aa51-5d00-a5cb-c85d-8daa-980b.ngrok-free.app';  // <<< IMPORTANTE: ATUALIZE ESTA URL
+        const promoterIdKey = 'crashGameUserId'; // ID do promotor logado
+        const promoterBalanceKey = 'crashGamePlayerBalance'; // Saldo do promotor logado
+        const authTokenKey = 'crashGameAuthToken'; 
+        const userRoleKey = 'crashGameUserRole';
+
+        // Elementos da DOM
+        const currentPromoterIdEl = document.getElementById('currentPromoterId');
+        const currentPromoterBalanceEl = document.getElementById('currentPromoterBalance');
+        const targetUserIdInput = document.getElementById('targetUserId');
+        const amountInput = document.getElementById('amount');
+        const responseMessageEl = document.getElementById('responseMessage');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem(authTokenKey);
+            const role = localStorage.getItem(userRoleKey);
+
+            if (!token || role !== 'promoter') {
+                console.log("VENDER DINDIN: Usuário não é promotor ou não está logado. Redirecionando...");
+                window.location.href = 'index.html';
+                return;
+            }
+            loadPromoterInfo();
+        });
+
+        function loadPromoterInfo() {
+            const promoterId = localStorage.getItem(promoterIdKey);
+            const promoterBalance = localStorage.getItem(promoterBalanceKey);
+
+            if (currentPromoterIdEl && promoterId) {
+                currentPromoterIdEl.textContent = promoterId;
+            }
+            if (currentPromoterBalanceEl && promoterBalance !== null) {
+                currentPromoterBalanceEl.textContent = parseFloat(promoterBalance).toFixed(2);
+            } else if (currentPromoterBalanceEl) {
+                currentPromoterBalanceEl.textContent = "0.00";
+            }
+        }
+
+        async function sellChips() {
+            const promoterId = localStorage.getItem(promoterIdKey);
+            const targetUserId = targetUserIdInput.value;
+            const amount = amountInput.value;
+            const token = localStorage.getItem(authTokenKey); // Para autenticação futura
+
+            responseMessageEl.style.display = 'none';
+            responseMessageEl.textContent = '';
+            responseMessageEl.className = 'message';
+
+            if (!targetUserId || !amount || parseFloat(amount) <= 0) {
+                showMessage('Por favor, preencha o ID do jogador e uma quantidade válida.', 'error');
+                return;
+            }
+
+            console.log(`Tentando vender ${amount} DINDIN do promotor ${promoterId} para o jogador ${targetUserId}`);
+
+            try {
+                const response = await fetch(`${backendUrl}/api/promoter/sell-chips`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 'Authorization': `Bearer ${token}` // Descomente quando implementar autenticação de token
+                    },
+                    body: JSON.stringify({ 
+                        promoterId: parseInt(promoterId), 
+                        targetUserId: parseInt(targetUserId), 
+                        amount: parseFloat(amount) 
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage(data.message || 'Fichas vendidas com sucesso!', 'success');
+                    // Atualiza o saldo do promotor no localStorage e na tela
+                    if (data.promoterNewBalance !== undefined) {
+                        localStorage.setItem(promoterBalanceKey, data.promoterNewBalance.toString());
+                        loadPromoterInfo(); // Recarrega as informações do promotor na tela
+                    }
+                    targetUserIdInput.value = ''; // Limpa os campos
+                    amountInput.value = '';      // Limpa os campos
+                } else {
+                    showMessage(data.error || 'Erro ao vender fichas.', 'error');
+                }
+            } catch (error) {
+                console.error('Erro na requisição de venda de fichas:', error);
+                showMessage('Erro de comunicação ao vender fichas. Tente novamente.', 'error');
+            }
+        }
+
+        function showMessage(message, type) {
+            responseMessageEl.textContent = message;
+            responseMessageEl.className = `message ${type}`;
+            responseMessageEl.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Promotor - Ship Crash</title>
+    <link rel="stylesheet" href="css/styles.css"/>
+    <link rel="stylesheet" href="css/promotor.css"/>
+    <script src="js/auth-utils.js"></script>
+</head>
+<body class="promotor-body">
+    <!-- Header com informações do usuário -->
+    <header class="promotor-header">
+        <div class="user-info">
+            <div class="avatar-section">
+                <div class="avatar">
+                    <img src="img/pirate-avatar.png" alt="Avatar Pirata" onerror="this.src='img/logo.png'">
+                </div>
+                <div class="avatar-text">
+                    <div class="club-name">CLUBE PIRATAS</div>
+                    <div class="year">2023</div>
+                </div>
+            </div>
+            
+            <div class="user-details">
+                <div class="app-name">CENTRAL PIRATA</div>
+                <div class="user-id">ID <span id="userId">202176</span></div>
+                <div class="user-role">
+                    <span class="role-icon">🛡️</span>
+                    <span id="userRole">Assistente</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="balance-section">
+            <div class="balance-item">
+                <span class="balance-icon">💰</span>
+                <span class="balance-label">Saldo de Sistema:</span>
+                <span class="balance-value" id="systemBalance">182.6597</span>
+            </div>
+            <div class="balance-item">
+                <span class="balance-icon">💰</span>
+                <span class="balance-label">Saldo de Loja:</span>
+                <span class="balance-value" id="storeBalance">200.00</span>
+            </div>
+            <button class="increase-btn" onclick="showIncreaseModal()">
+                <span>+</span> Aumentar Dindin/Diamante
+            </button>
+        </div>
+    </header>
+
+    <!-- Status Online -->
+    <section class="online-status">
+        <div class="status-info">
+            <span class="status-icon">🛒</span>
+            <span class="status-text">Online</span>
+            <span class="status-time" id="currentTime">13:06</span>
+        </div>
+        <div class="status-toggle">
+            <label class="toggle-switch">
+                <input type="checkbox" id="onlineToggle" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="status-note">
+            Realizando recargas e saques em 15 minutos, também é considerado Online.
+        </div>
+    </section>
+
+    <!-- Grid de Funcionalidades -->
+    <section class="functionality-grid">
+        <div class="grid-item purple" onclick="openSellModal()">
+            <div class="grid-icon">💸</div>
+            <div class="grid-text">VENDER DINDIN</div>
+        </div>
+        
+        <div class="grid-item green" onclick="openDataModal()">
+            <div class="grid-icon">📊</div>
+            <div class="grid-text">DADOS</div>
+        </div>
+        
+        <div class="grid-item red" onclick="openWithdrawModal()">
+            <div class="grid-icon">💳</div>
+            <div class="grid-text">RETIRAR DINDIN</div>
+        </div>
+        
+        <div class="grid-item magenta" onclick="openShopModal()">
+            <div class="grid-icon">🛍️</div>
+            <div class="grid-text">LOJINHA</div>
+        </div>
+        
+        <div class="grid-item cyan" onclick="openDetailsModal()">
+            <div class="grid-icon">📋</div>
+            <div class="grid-text">DETALHES DE VENDER E RETIRAR</div>
+        </div>
+        
+        <div class="grid-item purple" onclick="openDeductModal()">
+            <div class="grid-icon">🎫</div>
+            <div class="grid-text">DEDUZIR BILHETE</div>
+        </div>
+        
+        <div class="grid-item green" onclick="openContactModal()">
+            <div class="grid-icon">📱</div>
+            <div class="grid-text">ALTERAR CONTATO</div>
+        </div>
+        
+        <div class="grid-item blue" onclick="openCouponModal()">
+            <div class="grid-icon">🎟️</div>
+            <div class="grid-text">ENVIAR CUPOM</div>
+        </div>
+        
+        <div class="grid-item empty"></div>
+    </section>
+
+    <!-- Modais -->
+    <div id="sellModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('sellModal')">&times;</span>
+            <h2>Vender Fichas</h2>
+            <form id="sellForm">
+                <div class="form-group">
+                    <label>ID do Cliente:</label>
+                    <input type="text" id="clientId" required>
+                </div>
+                <div class="form-group">
+                    <label>Quantidade de Fichas:</label>
+                    <input type="number" id="sellAmount" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Valor por Ficha:</label>
+                    <input type="number" id="sellPrice" min="0.01" step="0.01" required>
+                </div>
+                <button type="submit" class="btn-primary">Vender</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="withdrawModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('withdrawModal')">&times;</span>
+            <h2>Sacar Fichas</h2>
+            <form id="withdrawForm">
+                <div class="form-group">
+                    <label>ID do Cliente:</label>
+                    <input type="text" id="withdrawClientId" required>
+                </div>
+                <div class="form-group">
+                    <label>Quantidade de Fichas:</label>
+                    <input type="number" id="withdrawAmount" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Método de Pagamento:</label>
+                    <select id="paymentMethod" required>
+                        <option value="">Selecione...</option>
+                        <option value="pix">PIX</option>
+                        <option value="transfer">Transferência</option>
+                        <option value="cash">Dinheiro</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">Sacar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('detailsModal')">&times;</span>
+            <h2>Detalhes de Vendas e Saques</h2>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('sales')">Vendas</button>
+                <button class="tab-btn" onclick="showTab('withdrawals')">Saques</button>
+            </div>
+            <div id="salesTab" class="tab-content active">
+                <div class="transaction-list" id="salesList">
+                    <!-- Vendas serão carregadas aqui -->
+                </div>
+            </div>
+            <div id="withdrawalsTab" class="tab-content">
+                <div class="transaction-list" id="withdrawalsList">
+                    <!-- Saques serão carregados aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/promotor.js"></script>
+</body>
+</html>

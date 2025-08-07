@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste do Novo Sistema</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            background: #ffd700;
+            color: #1e3c72;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #ffed4e;
+        }
+        button.danger {
+            background: #f44336;
+            color: white;
+        }
+        button.danger:hover {
+            background: #d32f2f;
+        }
+        .result {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success { border-left: 4px solid #4CAF50; }
+        .error { border-left: 4px solid #f44336; }
+        .warning { border-left: 4px solid #ff9800; }
+        .info { border-left: 4px solid #2196F3; }
+        .step {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste do Novo Sistema</h1>
+        <p>Esta página testa o novo sistema de autenticação com estrutura completa.</p>
+        
+        <div class="step">
+            <h3>📋 Passos para Teste:</h3>
+            <p>1. Limpar localStorage (se necessário)</p>
+            <p>2. Limpar e recriar Firestore</p>
+            <p>3. Testar cadastro com novo sistema</p>
+            <p>4. Verificar se todos os campos foram criados</p>
+        </div>
+        
+        <div>
+            <button onclick="checkLocalStorage()">🔍 Verificar localStorage</button>
+            <button class="danger" onclick="clearLocalStorage()">🗑️ Limpar localStorage</button>
+            <button onclick="goToCleanFirestore()">🏗️ Ir para Limpeza Firestore</button>
+            <button onclick="goToMainApp()">🎮 Ir para App Principal</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function addResult(title, content, type = 'info') {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = `<strong>${title}</strong>\n${content}`;
+            document.getElementById('results').appendChild(resultDiv);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        function checkLocalStorage() {
+            clearResults();
+            addResult('🔍 Verificando localStorage', 'Iniciando...', 'info');
+            
+            const authToken = localStorage.getItem('crashGameAuthToken');
+            const loggedInUser = localStorage.getItem('crashGameLoggedInUser');
+            const userId = localStorage.getItem('crashGameUserId');
+            const balance = localStorage.getItem('crashGamePlayerBalance');
+            
+            addResult('📊 Dados do localStorage', 
+                `Auth Token: ${authToken}\n` +
+                `Logged In User: ${loggedInUser}\n` +
+                `User ID: ${userId}\n` +
+                `Balance: ${balance}`, 
+                authToken ? 'warning' : 'success'
+            );
+            
+            if (loggedInUser) {
+                try {
+                    const userData = JSON.parse(loggedInUser);
+                    addResult('✅ Dados Parseados', JSON.stringify(userData, null, 2), 'success');
+                } catch (error) {
+                    addResult('❌ Erro ao Parsear', error.message, 'error');
+                }
+            }
+        }
+        
+        function clearLocalStorage() {
+            if (!confirm('⚠️ ATENÇÃO: Isso irá limpar todos os dados do localStorage!\n\nTem certeza de que quer continuar?')) {
+                return;
+            }
+            
+            addResult('🗑️ Limpando localStorage', 'Removendo todos os dados...', 'warning');
+            
+            localStorage.removeItem('crashGameAuthToken');
+            localStorage.removeItem('crashGameLoggedInUser');
+            localStorage.removeItem('crashGameUserId');
+            localStorage.removeItem('crashGamePlayerBalance');
+            
+            addResult('✅ localStorage Limpo', 'Todos os dados foram removidos com sucesso!', 'success');
+        }
+        
+        function goToCleanFirestore() {
+            window.location.href = 'clean-firestore.html';
+        }
+        
+        function goToMainApp() {
+            window.location.href = 'index.html';
+        }
+        
+        // Auto-executar verificação ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(checkLocalStorage, 1000);
+        });
+    </script>
+</body>
+</html> 

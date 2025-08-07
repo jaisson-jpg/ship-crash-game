@@ -1,0 +1,26 @@
+# Regras Permissivas do Firestore para Teste - Ship Crash Game
+# ⚠️ ATENÇÃO: Estas regras permitem acesso total. Use apenas para teste!
+
+# Versão das regras
+rules_version = '2';
+
+# Serviço do Firestore
+service cloud.firestore {
+  match /databases/{database}/documents {
+    # Permitir acesso total para todas as coleções
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+
+# Como aplicar essas regras:
+# 1. Vá para o Console do Firebase: https://console.firebase.google.com
+# 2. Selecione seu projeto
+# 3. Navegue para Firestore Database
+# 4. Clique na aba "Rules"
+# 5. Substitua as regras existentes pelas regras acima
+# 6. Clique em "Publish"
+
+# ⚠️ IMPORTANTE: Estas regras permitem acesso total ao banco de dados
+# Use apenas para teste e desenvolvimento. Para produção, use as regras seguras. 

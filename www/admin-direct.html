@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin Direto - Ship Crash</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header h1 {
+            color: #8a8aff;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #b0b0b0;
+            font-size: 1.1em;
+        }
+        
+        .nav-buttons {
+            margin-bottom: 20px;
+        }
+        
+        .nav-btn {
+            background: #2a2a4a;
+            color: #e0e0e0;
+            border: 1px solid #8a8aff;
+            margin-right: 10px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-btn:hover {
+            background: #8a8aff;
+            color: #1a1a2e;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #8a8aff;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #b0b0b0;
+            font-size: 1.1em;
+        }
+        
+        .section-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .section-title {
+            color: #8a8aff;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #8a8aff;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #e0e0e0;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            font-size: 1em;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #8a8aff;
+            box-shadow: 0 0 10px rgba(138, 138, 255, 0.3);
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: #8a8aff;
+            color: #1a1a2e;
+        }
+        
+        .btn-primary:hover {
+            background: #7a7aee;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: #00ff88;
+            color: #1a1a2e;
+        }
+        
+        .btn-warning {
+            background: #ffa726;
+            color: #1a1a2e;
+        }
+        
+        .btn-danger {
+            background: #ff6b6b;
+            color: #fff;
+        }
+        
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9em;
+        }
+        
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .users-table th, .users-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .users-table th {
+            background: rgba(138, 138, 255, 0.2);
+            color: #8a8aff;
+            font-weight: 600;
+        }
+        
+        .users-table tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background: #00ff88;
+            color: #1a1a2e;
+        }
+        
+        .status-inactive {
+            background: #ff6b6b;
+            color: #fff;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #8a8aff;
+            box-shadow: 0 0 10px rgba(138, 138, 255, 0.3);
+        }
+        
+        .success-message, .error-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .success-message {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+        
+        .error-message {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            border: 1px solid #ff6b6b;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #b0b0b0;
+            font-style: italic;
+        }
+    </style>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="header">
+            <h1>🚢 Painel Administrativo Direto - Ship Crash</h1>
+            <p>Gerencie usuários, saldos e configurações do sistema</p>
+        </div>
+        
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="window.location.href='index.html'">🔐 Login</button>
+            <button class="nav-btn" onclick="checkAuthStatus()">🔍 Verificar Status</button>
+            <button class="nav-btn" onclick="clearAuth()">🧹 Limpar Dados</button>
+            <button class="nav-btn" onclick="loadAdminData()">🔄 Recarregar Dados</button>
+        </div>
+        
+        <div id="authStatus" style="display: none;"></div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalUsers">0</div>
+                <div class="stat-label">Total de Usuários</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activeUsers">0</div>
+                <div class="stat-label">Usuários Ativos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalBalance">R$ 0,00</div>
+                <div class="stat-label">Saldo Total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalPromoters">0</div>
+                <div class="stat-label">Promotores</div>
+            </div>
+        </div>
+        
+        <div class="section-card">
+            <h2 class="section-title">👥 Gerenciar Usuários</h2>
+            <input type="text" id="userSearch" class="search-box" placeholder="Buscar usuários por ID, nome ou email...">
+            
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Saldo</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr><td colspan="6" class="loading">Carregando usuários...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="section-card">
+            <h2 class="section-title">💰 Adicionar Saldo</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="addBalanceUserId">ID do Usuário</label>
+                    <input type="text" id="addBalanceUserId" placeholder="ID ou UID">
+                </div>
+                <div class="form-group">
+                    <label for="addBalanceAmount">Valor (R$)</label>
+                    <input type="number" id="addBalanceAmount" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="addBalanceReason">Motivo</label>
+                    <input type="text" id="addBalanceReason" placeholder="Motivo da adição">
+                </div>
+            </div>
+            <button class="btn btn-success" onclick="addBalance()">➕ Adicionar Saldo</button>
+        </div>
+        
+        <div class="section-card">
+            <h2 class="section-title">🎯 Criar Promotor</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="promoterUserId">ID do Usuário</label>
+                    <input type="text" id="promoterUserId" placeholder="ID ou UID">
+                </div>
+                <div class="form-group">
+                    <label for="promoterName">Nome</label>
+                    <input type="text" id="promoterName" placeholder="Nome do promotor">
+                </div>
+                <div class="form-group">
+                    <label for="promoterEmail">Email</label>
+                    <input type="email" id="promoterEmail" placeholder="Email do promotor">
+                </div>
+            </div>
+            <button class="btn btn-warning" onclick="createPromoter()">🎯 Criar Promotor</button>
+        </div>
+        
+        <div class="section-card">
+            <h2 class="section-title">⚙️ Configurações do Sistema</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label for="initialBalance">Saldo Inicial (R$)</label>
+                    <input type="number" id="initialBalance" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="systemStatus">Status do Sistema</label>
+                    <select id="systemStatus">
+                        <option value="online">Online</option>
+                        <option value="maintenance">Manutenção</option>
+                        <option value="offline">Offline</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="updateSystemSettings()">💾 Salvar Configurações</button>
+        </div>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script>
+        // Funções de utilidade
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.textContent = message;
+            
+            document.querySelector('.admin-container').insertBefore(successDiv, document.querySelector('.stats-grid'));
+            
+            setTimeout(() => {
+                successDiv.remove();
+            }, 5000);
+        }
+        
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            
+            document.querySelector('.admin-container').insertBefore(errorDiv, document.querySelector('.stats-grid'));
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+        
+        function showAuthStatus(status, message) {
+            const statusDiv = document.getElementById('authStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.className = status === 'success' ? 'success-message' : 'error-message';
+            statusDiv.textContent = message;
+        }
+        
+        // Verificar status de autenticação
+        async function checkAuthStatus() {
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    showAuthStatus('error', '❌ Nenhum usuário logado');
+                    return;
+                }
+                
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                const userData = userDoc.data();
+                
+                if (!userData) {
+                    showAuthStatus('error', '❌ Dados do usuário não encontrados');
+                    return;
+                }
+                
+                if (userData.role === 'admin') {
+                    showAuthStatus('success', `✅ Admin logado: ${userData.fullName} (${user.email})`);
+                } else {
+                    showAuthStatus('error', `❌ Usuário não é admin (role: ${userData.role})`);
+                }
+                
+            } catch (error) {
+                showAuthStatus('error', `❌ Erro na verificação: ${error.message}`);
+            }
+        }
+        
+        function clearAuth() {
+            localStorage.clear();
+            auth.signOut();
+            showAuthStatus('success', '✅ Dados limpos. Faça login novamente.');
+        }
+        
+        // Carregar dados
+        async function loadAdminData() {
+            try {
+                await loadStats();
+                await loadUsers();
+                await loadSystemSettings();
+                showSuccess('✅ Dados carregados com sucesso!');
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                showError('Erro ao carregar dados do painel');
+            }
+        }
+        
+        // Carregar estatísticas
+        async function loadStats() {
+            try {
+                const usersSnapshot = await db.collection('users').get();
+                const users = [];
+                let totalBalance = 0;
+                let activeUsers = 0;
+                let promoters = 0;
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    users.push(userData);
+                    
+                    if (userData.balance) {
+                        totalBalance += userData.balance;
+                    }
+                    
+                    if (userData.status === 'active') {
+                        activeUsers++;
+                    }
+                    
+                    if (userData.role === 'promoter') {
+                        promoters++;
+                    }
+                });
+                
+                document.getElementById('totalUsers').textContent = users.length;
+                document.getElementById('activeUsers').textContent = activeUsers;
+                document.getElementById('totalBalance').textContent = `R$ ${totalBalance.toFixed(2)}`;
+                document.getElementById('totalPromoters').textContent = promoters;
+                
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+            }
+        }
+        
+        // Carregar usuários
+        async function loadUsers() {
+            try {
+                const usersSnapshot = await db.collection('users').get();
+                const users = [];
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    userData.uid = doc.id;
+                    users.push(userData);
+                });
+                
+                users.sort((a, b) => {
+                    const dateA = a.registrationDate ? new Date(a.registrationDate) : new Date(0);
+                    const dateB = b.registrationDate ? new Date(b.registrationDate) : new Date(0);
+                    return dateB - dateA;
+                });
+                
+                displayUsers(users);
+                
+            } catch (error) {
+                console.error('Erro ao carregar usuários:', error);
+                showError('Erro ao carregar lista de usuários');
+            }
+        }
+        
+        // Exibir usuários
+        function displayUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="loading">Nenhum usuário encontrado</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.numericId || user.uid}</td>
+                    <td>${user.fullName || 'N/A'}</td>
+                    <td>${user.email || 'N/A'}</td>
+                    <td>R$ ${(user.balance || 0).toFixed(2)}</td>
+                    <td>
+                        <span class="status-badge ${user.status === 'active' ? 'status-active' : 'status-inactive'}">
+                            ${user.status === 'active' ? 'Ativo' : 'Inativo'}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-small btn-success" onclick="addBalanceToUser('${user.uid}', '${user.fullName}')">
+                                + Saldo
+                            </button>
+                            ${user.role !== 'promoter' ? `
+                                <button class="btn btn-small btn-warning" onclick="makePromoter('${user.uid}', '${user.fullName}')">
+                                    Promotor
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-small btn-danger" onclick="toggleUserStatus('${user.uid}', '${user.status}')">
+                                ${user.status === 'active' ? 'Desativar' : 'Ativar'}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // Buscar usuários
+        async function searchUsers(query) {
+            if (!query.trim()) {
+                await loadUsers();
+                return;
+            }
+            
+            try {
+                const usersSnapshot = await db.collection('users').get();
+                const users = [];
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    userData.uid = doc.id;
+                    
+                    const searchText = `${userData.numericId} ${userData.fullName} ${userData.email}`.toLowerCase();
+                    if (searchText.includes(query.toLowerCase())) {
+                        users.push(userData);
+                    }
+                });
+                
+                displayUsers(users);
+                
+            } catch (error) {
+                console.error('Erro na busca de usuários:', error);
+            }
+        }
+        
+        // Adicionar saldo
+        async function addBalance() {
+            const userId = document.getElementById('addBalanceUserId').value.trim();
+            const amount = parseFloat(document.getElementById('addBalanceAmount').value);
+            const reason = document.getElementById('addBalanceReason').value.trim();
+            
+            if (!userId || !amount || amount <= 0) {
+                showError('Por favor, preencha todos os campos corretamente');
+                return;
+            }
+            
+            try {
+                const usersSnapshot = await db.collection('users').get();
+                let targetUser = null;
+                let targetUid = null;
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    if (userData.numericId == userId || doc.id === userId) {
+                        targetUser = userData;
+                        targetUid = doc.id;
+                    }
+                });
+                
+                if (!targetUser) {
+                    showError('Usuário não encontrado');
+                    return;
+                }
+                
+                const newBalance = (targetUser.balance || 0) + amount;
+                await db.collection('users').doc(targetUid).update({
+                    balance: newBalance
+                });
+                
+                showSuccess(`Saldo adicionado com sucesso! Novo saldo: R$ ${newBalance.toFixed(2)}`);
+                
+                document.getElementById('addBalanceUserId').value = '';
+                document.getElementById('addBalanceAmount').value = '';
+                document.getElementById('addBalanceReason').value = '';
+                
+                await loadAdminData();
+                
+            } catch (error) {
+                console.error('Erro ao adicionar saldo:', error);
+                showError('Erro ao adicionar saldo');
+            }
+        }
+        
+        // Adicionar saldo para usuário específico
+        function addBalanceToUser(uid, userName) {
+            document.getElementById('addBalanceUserId').value = uid;
+            document.getElementById('addBalanceAmount').focus();
+            
+            document.querySelector('.section-card:nth-child(3)').scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+        
+        // Criar promotor
+        async function createPromoter() {
+            const userId = document.getElementById('promoterUserId').value.trim();
+            const name = document.getElementById('promoterName').value.trim();
+            const email = document.getElementById('promoterEmail').value.trim();
+            
+            if (!userId || !name || !email) {
+                showError('Por favor, preencha todos os campos');
+                return;
+            }
+            
+            try {
+                const usersSnapshot = await db.collection('users').get();
+                let targetUser = null;
+                let targetUid = null;
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    if (userData.numericId == userId || doc.id === userId) {
+                        targetUser = userData;
+                        targetUid = doc.id;
+                    }
+                });
+                
+                if (!targetUser) {
+                    showError('Usuário não encontrado');
+                    return;
+                }
+                
+                await db.collection('users').doc(targetUid).update({
+                    role: 'promoter',
+                    fullName: name,
+                    email: email,
+                    promoterData: {
+                        createdAt: new Date().toISOString(),
+                        createdBy: auth.currentUser?.uid || 'admin'
+                    }
+                });
+                
+                showSuccess('Promotor criado com sucesso!');
+                
+                document.getElementById('promoterUserId').value = '';
+                document.getElementById('promoterName').value = '';
+                document.getElementById('promoterEmail').value = '';
+                
+                await loadAdminData();
+                
+            } catch (error) {
+                console.error('Erro ao criar promotor:', error);
+                showError('Erro ao criar promotor');
+            }
+        }
+        
+        // Tornar usuário promotor
+        async function makePromoter(uid, userName) {
+            if (confirm(`Tem certeza que deseja tornar ${userName} um promotor?`)) {
+                try {
+                    await db.collection('users').doc(uid).update({
+                        role: 'promoter',
+                        promoterData: {
+                            createdAt: new Date().toISOString(),
+                            createdBy: auth.currentUser?.uid || 'admin'
+                        }
+                    });
+                    
+                    showSuccess('Usuário promovido a promotor com sucesso!');
+                    await loadAdminData();
+                    
+                } catch (error) {
+                    console.error('Erro ao tornar promotor:', error);
+                    showError('Erro ao tornar promotor');
+                }
+            }
+        }
+        
+        // Alternar status do usuário
+        async function toggleUserStatus(uid, currentStatus) {
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            const action = newStatus === 'active' ? 'ativar' : 'desativar';
+            
+            if (confirm(`Tem certeza que deseja ${action} este usuário?`)) {
+                try {
+                    await db.collection('users').doc(uid).update({
+                        status: newStatus
+                    });
+                    
+                    showSuccess(`Usuário ${action} com sucesso!`);
+                    await loadAdminData();
+                    
+                } catch (error) {
+                    console.error('Erro ao alterar status:', error);
+                    showError('Erro ao alterar status do usuário');
+                }
+            }
+        }
+        
+        // Carregar configurações do sistema
+        async function loadSystemSettings() {
+            try {
+                const settingsDoc = await db.collection('systemSettings').doc('main').get();
+                
+                if (settingsDoc.exists) {
+                    const settings = settingsDoc.data();
+                    document.getElementById('initialBalance').value = settings.initialBalance || 0.00;
+                    document.getElementById('systemStatus').value = settings.systemStatus || 'online';
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar configurações:', error);
+            }
+        }
+        
+        // Atualizar configurações do sistema
+        async function updateSystemSettings() {
+            const initialBalance = parseFloat(document.getElementById('initialBalance').value);
+            const systemStatus = document.getElementById('systemStatus').value;
+            
+            try {
+                await db.collection('systemSettings').doc('main').set({
+                    initialBalance: initialBalance,
+                    systemStatus: systemStatus,
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: auth.currentUser?.uid || 'admin'
+                });
+                
+                showSuccess('Configurações atualizadas com sucesso!');
+                
+            } catch (error) {
+                console.error('Erro ao atualizar configurações:', error);
+                showError('Erro ao atualizar configurações');
+            }
+        }
+        
+        // Configurar event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚢 Admin Direct carregado');
+            
+            // Busca de usuários
+            const userSearch = document.getElementById('userSearch');
+            if (userSearch) {
+                userSearch.addEventListener('input', (e) => {
+                    searchUsers(e.target.value);
+                });
+            }
+            
+            // Carregar dados automaticamente
+            setTimeout(() => {
+                loadAdminData();
+            }, 1000);
+        });
+        
+        // Funções globais
+        window.addBalance = addBalance;
+        window.createPromoter = createPromoter;
+        window.updateSystemSettings = updateSystemSettings;
+        window.addBalanceToUser = addBalanceToUser;
+        window.makePromoter = makePromoter;
+        window.toggleUserStatus = toggleUserStatus;
+        window.checkAuthStatus = checkAuthStatus;
+        window.clearAuth = clearAuth;
+        window.loadAdminData = loadAdminData;
+    </script>
+</body>
+</html> 

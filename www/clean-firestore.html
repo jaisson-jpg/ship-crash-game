@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpar e Recriar Firestore</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            background: #ffd700;
+            color: #1e3c72;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #ffed4e;
+        }
+        button.danger {
+            background: #f44336;
+            color: white;
+        }
+        button.danger:hover {
+            background: #d32f2f;
+        }
+        .result {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success { border-left: 4px solid #4CAF50; }
+        .error { border-left: 4px solid #f44336; }
+        .warning { border-left: 4px solid #ff9800; }
+        .info { border-left: 4px solid #2196F3; }
+        .step {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗑️ Limpar e Recriar Firestore</h1>
+        <p>Esta página limpa completamente o Firestore e recria a estrutura do zero.</p>
+        
+        <div class="step">
+            <h3>⚠️ ATENÇÃO:</h3>
+            <p>Esta operação irá <strong>APAGAR TODOS OS DADOS</strong> do Firestore!</p>
+            <p>Use apenas se você tem certeza de que quer começar do zero.</p>
+        </div>
+        
+        <div>
+            <button onclick="checkCurrentData()">🔍 Verificar Dados Atuais</button>
+            <button class="danger" onclick="clearAllData()">🗑️ APAGAR TUDO</button>
+            <button onclick="createNewStructure()">🏗️ Criar Nova Estrutura</button>
+            <button onclick="verifyNewStructure()">✅ Verificar Nova Estrutura</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Firebase Config -->
+    <script src="js/firebase-config.js"></script>
+    
+    <script>
+        function addResult(title, content, type = 'info') {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = `<strong>${title}</strong>\n${content}`;
+            document.getElementById('results').appendChild(resultDiv);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        async function checkCurrentData() {
+            clearResults();
+            addResult('🔍 Verificando Dados Atuais', 'Iniciando...', 'info');
+            
+            try {
+                const collections = ['users', 'systemSettings', 'system'];
+                let totalDocs = 0;
+                
+                for (const collectionName of collections) {
+                    const docs = await firebase.firestore().collection(collectionName).get();
+                    if (!docs.empty) {
+                        addResult(`📄 Coleção ${collectionName}`, `${docs.size} documentos encontrados`, 'warning');
+                        totalDocs += docs.size;
+                        
+                        docs.forEach(doc => {
+                            addResult(`  - ${doc.id}`, JSON.stringify(doc.data(), null, 2), 'info');
+                        });
+                    } else {
+                        addResult(`✅ Coleção ${collectionName}`, 'Vazia', 'success');
+                    }
+                }
+                
+                addResult('📊 Resumo', `Total de documentos: ${totalDocs}`, totalDocs > 0 ? 'warning' : 'success');
+                
+            } catch (error) {
+                addResult('❌ Erro ao Verificar', error.message, 'error');
+            }
+        }
+        
+        async function clearAllData() {
+            if (!confirm('⚠️ ATENÇÃO: Isso irá APAGAR TODOS OS DADOS do Firestore!\n\nTem certeza de que quer continuar?')) {
+                return;
+            }
+            
+            addResult('🗑️ Iniciando Limpeza Completa', 'Apagando todos os dados...', 'warning');
+            
+            try {
+                const collections = ['users', 'systemSettings', 'system'];
+                let deletedCount = 0;
+                
+                for (const collectionName of collections) {
+                    const docs = await firebase.firestore().collection(collectionName).get();
+                    
+                    if (!docs.empty) {
+                        for (const doc of docs.docs) {
+                            await firebase.firestore().collection(collectionName).doc(doc.id).delete();
+                            addResult(`🗑️ Removido: ${collectionName}/${doc.id}`, 'Documento removido', 'success');
+                            deletedCount++;
+                        }
+                    }
+                }
+                
+                addResult('🎉 Limpeza Concluída', `${deletedCount} documentos removidos com sucesso!`, 'success');
+                
+            } catch (error) {
+                addResult('❌ Erro na Limpeza', error.message, 'error');
+            }
+        }
+        
+        async function createNewStructure() {
+            addResult('🏗️ Criando Nova Estrutura', 'Iniciando...', 'info');
+            
+            try {
+                // 1. Criar documento main em systemSettings
+                const mainData = {
+                    initialBalance: 0.00,
+                    systemStatus: "online",
+                    maintenanceMode: false,
+                    registrationEnabled: true,
+                    maxUsers: 10000,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    createdBy: "system-setup"
+                };
+                
+                await firebase.firestore().collection('systemSettings').doc('main').set(mainData);
+                addResult('✅ Documento main Criado', JSON.stringify(mainData, null, 2), 'success');
+                
+                // 2. Criar documento userCounter em systemSettings
+                const counterData = {
+                    nextUserId: 100001,
+                    totalUsers: 0,
+                    activeUsers: 0,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    createdBy: "system-setup"
+                };
+                
+                await firebase.firestore().collection('systemSettings').doc('userCounter').set(counterData);
+                addResult('✅ Documento userCounter Criado', JSON.stringify(counterData, null, 2), 'success');
+                
+                // 3. Criar documento notifications em systemSettings
+                const notificationsData = {
+                    rechargeNotifications: true,
+                    withdrawalNotifications: true,
+                    gameNotifications: true,
+                    adminNotifications: true,
+                    emailNotifications: false,
+                    pushNotifications: false,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    createdBy: "system-setup"
+                };
+                
+                await firebase.firestore().collection('systemSettings').doc('notifications').set(notificationsData);
+                addResult('✅ Documento notifications Criado', JSON.stringify(notificationsData, null, 2), 'success');
+                
+                // 4. Criar documento admin em systemSettings
+                const adminData = {
+                    adminUsers: [],
+                    adminPermissions: {
+                        userManagement: true,
+                        balanceManagement: true,
+                        systemSettings: true,
+                        notifications: true,
+                        reports: true
+                    },
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    createdBy: "system-setup"
+                };
+                
+                await firebase.firestore().collection('systemSettings').doc('admin').set(adminData);
+                addResult('✅ Documento admin Criado', JSON.stringify(adminData, null, 2), 'success');
+                
+                addResult('🎉 Estrutura Criada', 'Todos os documentos do sistema foram criados com sucesso!', 'success');
+                
+            } catch (error) {
+                addResult('❌ Erro ao Criar Estrutura', error.message, 'error');
+            }
+        }
+        
+        async function verifyNewStructure() {
+            addResult('✅ Verificando Nova Estrutura', 'Verificando se todos os documentos foram criados...', 'info');
+            
+            try {
+                const requiredDocs = [
+                    { collection: 'systemSettings', doc: 'main' },
+                    { collection: 'systemSettings', doc: 'userCounter' },
+                    { collection: 'systemSettings', doc: 'notifications' },
+                    { collection: 'systemSettings', doc: 'admin' }
+                ];
+                
+                let allCreated = true;
+                
+                for (const required of requiredDocs) {
+                    const doc = await firebase.firestore().collection(required.collection).doc(required.doc).get();
+                    
+                    if (doc.exists) {
+                        const data = doc.data();
+                        addResult(`✅ ${required.collection}/${required.doc}`, JSON.stringify(data, null, 2), 'success');
+                    } else {
+                        addResult(`❌ ${required.collection}/${required.doc}`, 'Documento não encontrado!', 'error');
+                        allCreated = false;
+                    }
+                }
+                
+                if (allCreated) {
+                    addResult('🎉 Estrutura Completa', 'Todos os documentos necessários foram criados com sucesso!', 'success');
+                } else {
+                    addResult('⚠️ Estrutura Incompleta', 'Alguns documentos não foram criados', 'warning');
+                }
+                
+            } catch (error) {
+                addResult('❌ Erro na Verificação', error.message, 'error');
+            }
+        }
+        
+        // Auto-executar verificação ao carregar
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(checkCurrentData, 1000);
+        });
+    </script>
+</body>
+</html> 

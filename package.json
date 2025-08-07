@@ -1,0 +1,37 @@
+{
+  "name": "ship-crash-game",
+  "version": "1.0.0",
+  "description": "Ship Crash Game - Jogo de crash com sistema completo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build": "echo 'Build completed'",
+    "test": "echo 'No tests specified'"
+  },
+  "keywords": [
+    "crash-game",
+    "ship-crash",
+    "game",
+    "firebase",
+    "websocket"
+  ],
+  "author": "Ship Crash Team",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "cors": "^2.8.5",
+    "path": "^0.12.7",
+    "http": "^0.0.1-security"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SEU_USUARIO/ship-crash-game.git"
+  },
+  "homepage": "https://github.com/SEU_USUARIO/ship-crash-game#readme"
+}

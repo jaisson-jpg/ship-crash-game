@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Ship Crash</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            margin: 0; 
+            font-family: 'Inter', sans-serif; 
+            background: #0a0a0a;
+            color: #ffffff; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            text-align: center; 
+            padding: 20px; 
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+            z-index: -1;
+        }
+        
+        .container { 
+            background: rgba(15, 15, 15, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 40px; 
+            border-radius: 24px; 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 25px 50px rgba(0,0,0,0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            width: 100%; 
+            max-width: 420px; 
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .logo {
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .logo h1 {
+            font-size: 3.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            letter-spacing: -2px;
+        }
+        
+        .logo p {
+            color: #a0a0a0;
+            font-size: 1em;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+        
+        input[type="email"], input[type="password"], input[type="text"] { 
+            width: 100%; 
+            padding: 18px 24px; 
+            margin: 12px 0; 
+            border-radius: 16px; 
+            border: 2px solid rgba(255, 255, 255, 0.1); 
+            background: rgba(255, 255, 255, 0.05); 
+            color: #ffffff; 
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(10px);
+        }
+        
+        input::placeholder {
+            color: #666;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        button { 
+            width: 100%;
+            padding: 18px 24px; 
+            margin: 12px 0; 
+            border: none; 
+            border-radius: 16px; 
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            color: #ffffff; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 16px; 
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.5px;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        button:hover::before {
+            left: 100%;
+        }
+        
+        button:hover { 
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(255, 107, 107, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(-1px);
+        }
+        
+        .logo-button { 
+            margin: 40px 0; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+        }
+        
+        .logo-button img { 
+            width: 220px; 
+            transition: all 0.3s ease; 
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+        }
+        
+        .logo-button img:hover { 
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+        }
+        
+        .user-id, .saldo { 
+            margin: 20px 0; 
+            font-size: 16px; 
+            color: #ffffff;
+            font-weight: 500;
+        }
+        
+        .saldo span { 
+            color: #4ecdc4; 
+            font-weight: 700; 
+        }
+        
+        /* Estilos para formulário de login */
+        .auth-form { display: block; }
+        .lobby-content { display: none; }
+        
+        .auth-message { 
+            padding: 16px 20px; 
+            margin: 20px 0; 
+            border-radius: 16px; 
+            font-weight: 500; 
+            font-size: 14px;
+            border: 1px solid;
+        }
+        
+        .auth-message.success { 
+            background: rgba(78, 205, 196, 0.1); 
+            color: #4ecdc4; 
+            border-color: rgba(78, 205, 196, 0.3);
+        }
+        
+        .auth-message.error { 
+            background: rgba(255, 107, 107, 0.1); 
+            color: #ff6b6b; 
+            border-color: rgba(255, 107, 107, 0.3);
+        }
+        
+        .form-group { 
+            margin: 24px 0; 
+            text-align: left;
+        }
+        
+        .form-label { 
+            display: block; 
+            margin-bottom: 8px; 
+            color: #ffffff; 
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-input { 
+            width: 100%; 
+            padding: 18px 24px; 
+            border-radius: 16px; 
+            border: 2px solid rgba(255, 255, 255, 0.1); 
+            background: rgba(255, 255, 255, 0.05); 
+            color: #ffffff; 
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(10px);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(78, 205, 196, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .toggle-form { 
+            background: none; 
+            border: none; 
+            color: #4ecdc4; 
+            text-decoration: none; 
+            cursor: pointer; 
+            margin-top: 20px; 
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(78, 205, 196, 0.3);
+        }
+        
+        .toggle-form:hover {
+            background: rgba(78, 205, 196, 0.1);
+            border-color: #4ecdc4;
+            transform: translateY(-2px);
+        }
+        
+        .form-divider {
+            margin: 30px 0;
+            text-align: center;
+            position: relative;
+        }
+        
+        .form-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        }
+        
+        .form-divider span {
+            background: rgba(15, 15, 15, 0.95);
+            padding: 0 20px;
+            color: #666;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+        
+        .logout-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52) !important;
+            margin-top: 40px;
+        }
+        
+        .logout-btn:hover {
+            box-shadow: 0 15px 30px rgba(255, 107, 107, 0.4) !important;
+        }
+        
+        .promoter-btn {
+            background: linear-gradient(135deg, #feca57, #ff9ff3) !important;
+            margin-top: 20px;
+        }
+        
+        .promoter-btn:hover {
+            box-shadow: 0 15px 30px rgba(254, 202, 87, 0.4) !important;
+        }
+        
+        /* Animações de entrada */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .container {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        /* Efeito de partículas no fundo */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Partículas de fundo -->
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <div class="logo">
+            <h1>Ship Crash</h1>
+            <p>MERGULHE NA AVENTURA</p>
+        </div>
+        
+        <!-- Formulário de Login/Registro -->
+        <div id="authForm" class="auth-form">
+            <!-- Formulário de Login -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">EMAIL</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="Seu Email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">SENHA</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Sua Senha" required>
+                </div>
+                <button type="button" id="loginBtn">Entrar</button>
+                <div class="form-divider">
+                    <span>OR</span>
+                </div>
+                <button type="button" class="toggle-form" onclick="showRegister()">Criar Conta</button>
+            </form>
+
+            <!-- Formulário de Registro -->
+            <form id="registerForm" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label">NOME COMPLETO</label>
+                    <input type="text" id="registerFullName" class="form-input" placeholder="Seu Nome Completo" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">EMAIL</label>
+                    <input type="email" id="registerEmail" class="form-input" placeholder="Seu Melhor Email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">CPF</label>
+                    <input type="text" id="registerCpf" class="form-input" placeholder="000.000.000-00" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">SENHA </label>
+                    <input type="password" id="registerPassword" class="form-input" placeholder="Minimo 6 caracteres" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">COMFIRMAR SENHA</label>
+                    <input type="password" id="registerConfirmPassword" class="form-input" placeholder="Confirmar senha" required>
+                </div>
+                <button type="button" id="registerBtn">CRIAR UMA CONTA</button>
+                <div class="form-divider">
+                    <span>OR</span>
+                </div>
+                <button type="button" class="toggle-form" onclick="showLogin()">Login</button>
+            </form>
+
+            <div id="authMessage" class="auth-message" style="display: none;"></div>
+        </div>
+
+        <!-- Conteúdo do Lobby (após login) -->
+        <div id="lobbyContent" class="lobby-content">
+            <div class="user-id" id="userIdDisplayLobby">USER ID: Loading...</div>
+            <div class="saldo">BALANCE: R$ <span id="saldoDisplayLobby">0.00</span></div>
+            <div class="logo-button" onclick="irParaJogo()">
+                <img src="img/tr.png" alt="Start Deep Sea Submarine Game"> 
+                <p>🎮 PLAY SUBMARINE</p>
+            </div>
+            <div class="promoter-button" onclick="irParaPromotor()" id="promoterBtn" style="display: none;">
+                <button class="promoter-btn">💰 PROMOTER SYSTEM</button>
+            </div>
+            <button onclick="logout()" class="logout-btn">Sair</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-complete-new.js"></script>
+    <script>
+        // Verificar se as funções foram carregadas
+        console.log('INDEX: Verificando se funções foram carregadas...');
+        console.log('INDEX: fazerLogin existe:', typeof window.fazerLogin);
+        console.log('INDEX: fazerRegistro existe:', typeof window.fazerRegistro);
+        
+        // Aguardar um pouco para garantir que o script foi carregado
+        setTimeout(() => {
+            console.log('INDEX: Verificação tardia - fazerLogin existe:', typeof window.fazerLogin);
+            console.log('INDEX: Verificação tardia - fazerRegistro existe:', typeof window.fazerRegistro);
+        }, 1000);
+        
+
+    </script>
+    <script>
+        // Criar partículas de fundo
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        const userIdDisplayLobby = document.getElementById('userIdDisplayLobby');
+        const saldoDisplayLobby = document.getElementById('saldoDisplayLobby');
+        const authForm = document.getElementById('authForm');
+        const lobbyContent = document.getElementById('lobbyContent');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const authMessage = document.getElementById('authMessage');
+
+        let currentUserId = null;
+        let currentPlayerBalance = 0.00;
+
+        // Funções para alternar entre login e registro
+        function showRegister() {
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+            authMessage.style.display = 'none';
+        }
+
+        function showLogin() {
+            registerForm.style.display = 'none';
+            loginForm.style.display = 'block';
+            authMessage.style.display = 'none';
+        }
+
+        // Função para limpar formulários
+        function clearForms() {
+            loginForm.reset();
+            registerForm.reset();
+            authMessage.style.display = 'none';
+        }
+
+        // Função de logout
+        function logout() {
+            // Limpar localStorage
+            localStorage.removeItem('crashGameAuthToken');
+            localStorage.removeItem('crashGameLoggedInUser');
+            localStorage.removeItem('crashGameUserId');
+            localStorage.removeItem('crashGamePlayerBalance');
+            
+            // Fazer logout do Firebase
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                firebase.auth().signOut();
+            }
+            
+            showAuthForm();
+        }
+
+        // Mostrar formulário de login
+        function showAuthForm() {
+            authForm.style.display = 'block';
+            lobbyContent.style.display = 'none';
+        }
+
+        // Mostrar lobby
+        function showLobby() {
+            console.log("INDEX: showLobby() chamada");
+            console.log("INDEX: authForm existe:", !!authForm);
+            console.log("INDEX: lobbyContent existe:", !!lobbyContent);
+            
+            if (authForm) {
+                authForm.style.display = 'none';
+                console.log("INDEX: authForm escondido");
+            }
+            
+            if (lobbyContent) {
+                lobbyContent.style.display = 'block';
+                console.log("INDEX: lobbyContent mostrado");
+            }
+            
+            // Carregar dados do lobby
+            loadLobbyDataAndUI();
+        }
+
+        // Verificar se o usuário está logado
+        function verificarSeUsuarioLogado() {
+            console.log("INDEX: Verificando se usuário está logado...");
+            
+            // Verificar se o Firebase está carregado
+            if (typeof firebase === 'undefined') {
+                console.log("INDEX: Firebase não está carregado, aguardando...");
+                setTimeout(verificarSeUsuarioLogado, 1000);
+                return;
+            }
+            
+            // VERSÃO SUPER SIMPLES - SÓ VERIFICAR LOCALSTORAGE
+            const authToken = localStorage.getItem('crashGameAuthToken');
+            const loggedInUserStr = localStorage.getItem('crashGameLoggedInUser');
+            
+            console.log("INDEX: authToken:", !!authToken);
+            console.log("INDEX: loggedInUserStr:", !!loggedInUserStr);
+            
+            if (authToken && loggedInUserStr) {
+                console.log("INDEX: Usuário logado via localStorage, mostrando lobby");
+                showLobby();
+            } else {
+                console.log("INDEX: Usuário não logado, mostrando formulário de login");
+                showAuthForm();
+            }
+        }
+
+
+
+        // Verificar se já está logado ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("INDEX: Verificando se usuário está logado...");
+            createParticles();
+            verificarSeUsuarioLogado();
+            
+            // Adicionar event listeners para os botões de login e registro
+            const loginBtn = document.getElementById('loginBtn');
+            const registerBtn = document.getElementById('registerBtn');
+            
+            if (loginBtn) {
+                loginBtn.addEventListener('click', () => {
+                    console.log('INDEX: Botão de login clicado');
+                    if (typeof window.fazerLogin === 'function') {
+                        window.fazerLogin();
+                    } else {
+                        console.error('INDEX: fazerLogin não está disponível');
+                        alert('Erro: Função de login não está disponível. Tente recarregar a página.');
+                    }
+                });
+                console.log('INDEX: Event listener de login adicionado');
+            }
+            
+            if (registerBtn) {
+                registerBtn.addEventListener('click', () => {
+                    console.log('INDEX: Botão de registro clicado');
+                    if (typeof window.fazerRegistro === 'function') {
+                        window.fazerRegistro();
+                    } else {
+                        console.error('INDEX: fazerRegistro não está disponível');
+                        alert('Erro: Função de registro não está disponível. Tente recarregar a página.');
+                    }
+                });
+                console.log('INDEX: Event listener de registro adicionado');
+            }
+        });
+
+        function loadLobbyDataAndUI() {
+            console.log("INDEX: Carregando dados do lobby...");
+            
+            // Verificar se o Firebase está carregado
+            if (typeof firebase === 'undefined') {
+                console.error("INDEX: Firebase não está carregado");
+                setTimeout(loadLobbyDataAndUI, 1000);
+                return;
+            }
+            
+            // Verificar se o usuário está logado no Firebase
+            const currentUser = firebase.auth().currentUser;
+            if (!currentUser) {
+                console.error("INDEX: Nenhum usuário logado encontrado");
+                // Tentar usar dados do localStorage como fallback
+                const loggedInUserStr = localStorage.getItem('crashGameLoggedInUser');
+                if (loggedInUserStr) {
+                    try {
+                        const userData = JSON.parse(loggedInUserStr);
+                        console.log("INDEX: Usando dados do localStorage:", userData);
+                        
+                        currentUserId = userData.userId || 'N/A';
+                        currentPlayerBalance = userData.balance || 0;
+                        
+                        if (userIdDisplayLobby) {
+                            userIdDisplayLobby.textContent = `USER ID: ${currentUserId}`;
+                        }
+                        if (saldoDisplayLobby) {
+                            saldoDisplayLobby.textContent = currentPlayerBalance.toFixed(2);
+                        }
+                    } catch (error) {
+                        console.error("INDEX: Erro ao parsear dados do localStorage:", error);
+                    }
+                }
+                return;
+            }
+            
+            console.log("INDEX: Usuário logado:", currentUser.uid);
+            console.log("INDEX: Email do usuário:", currentUser.email);
+            
+            // Verificar se o Firestore está disponível
+            if (!firebase.firestore) {
+                console.error("INDEX: Firestore não está disponível");
+                return;
+            }
+            
+            // Buscar dados do usuário no Firestore
+            console.log("INDEX: Buscando dados no Firestore...");
+            
+            // Adicionar timeout para evitar espera infinita
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Timeout ao buscar dados')), 10000);
+            });
+            
+            Promise.race([
+                firebase.firestore().collection('users').doc(currentUser.uid).get(),
+                timeoutPromise
+            ])
+            .then((doc) => {
+                console.log("INDEX: Documento encontrado:", doc.exists);
+                
+                if (doc.exists) {
+                    const userData = doc.data();
+                    console.log("INDEX: Dados do usuário carregados:", userData);
+                    
+                    // Se o usuário é admin, redirecionar para admin.html
+                    if (userData.role === 'admin') {
+                        console.log("INDEX: Usuário é admin, redirecionando para admin.html");
+                        window.location.replace('admin.html');
+                        return;
+                    }
+                    
+                    currentUserId = userData.numericId || currentUser.uid;
+                    currentPlayerBalance = userData.balance || 0;
+                    
+                    console.log("INDEX: ID do usuário:", currentUserId);
+                    console.log("INDEX: Saldo do usuário:", currentPlayerBalance);
+                    
+                    // Atualizar UI
+                    if (userIdDisplayLobby) {
+                        userIdDisplayLobby.textContent = `USER ID: ${currentUserId}`;
+                        console.log("INDEX: UI atualizada - USER ID");
+                    } else {
+                        console.error("INDEX: Elemento userIdDisplayLobby não encontrado");
+                    }
+                    
+                    if (saldoDisplayLobby) {
+                        saldoDisplayLobby.textContent = currentPlayerBalance.toFixed(2);
+                        console.log("INDEX: UI atualizada - SALDO");
+                    } else {
+                        console.error("INDEX: Elemento saldoDisplayLobby não encontrado");
+                    }
+
+                    // Mostrar botão de promotor apenas para promotores
+                    const promoterBtn = document.getElementById('promoterBtn');
+                    if (promoterBtn && userData.role === 'promoter') {
+                        promoterBtn.style.display = 'block';
+                        console.log("INDEX: Botão de promotor mostrado");
+                    }
+                } else {
+                    console.error("INDEX: Dados do usuário não encontrados no Firestore!");
+                    console.log("INDEX: Tentando buscar com dados do localStorage...");
+                    
+                    // Fallback: usar dados do localStorage
+                    const loggedInUserStr = localStorage.getItem('crashGameLoggedInUser');
+                    if (loggedInUserStr) {
+                        try {
+                            const userData = JSON.parse(loggedInUserStr);
+                            console.log("INDEX: Dados do localStorage:", userData);
+                            
+                            currentUserId = userData.userId || currentUser.uid;
+                            currentPlayerBalance = userData.balance || 0;
+                            
+                            if (userIdDisplayLobby) {
+                                userIdDisplayLobby.textContent = `USER ID: ${currentUserId}`;
+                            }
+                            if (saldoDisplayLobby) {
+                                saldoDisplayLobby.textContent = currentPlayerBalance.toFixed(2);
+                            }
+                        } catch (error) {
+                            console.error("INDEX: Erro ao parsear dados do localStorage:", error);
+                        }
+                    }
+                }
+            })
+            .catch((error) => {
+                console.error("INDEX: Erro ao buscar dados do usuário:", error);
+                console.log("INDEX: Tentando buscar com dados do localStorage...");
+                
+                // Fallback: usar dados do localStorage
+                const loggedInUserStr = localStorage.getItem('crashGameLoggedInUser');
+                if (loggedInUserStr) {
+                    try {
+                        const userData = JSON.parse(loggedInUserStr);
+                        console.log("INDEX: Dados do localStorage:", userData);
+                        
+                        currentUserId = userData.userId || currentUser.uid;
+                        currentPlayerBalance = userData.balance || 0;
+                        
+                        if (userIdDisplayLobby) {
+                            userIdDisplayLobby.textContent = `USER ID: ${currentUserId}`;
+                        }
+                        if (saldoDisplayLobby) {
+                            saldoDisplayLobby.textContent = currentPlayerBalance.toFixed(2);
+                        }
+                    } catch (error) {
+                        console.error("INDEX: Erro ao parsear dados do localStorage:", error);
+                    }
+                }
+            });
+        }
+
+        function irParaJogo() {
+            console.log("INDEX: irParaJogo() chamada");
+            
+            // Verificar se o usuário está logado no Firebase
+            const currentUser = firebase.auth().currentUser;
+            console.log("INDEX: Firebase currentUser:", !!currentUser);
+            
+            if (!currentUser) {
+                console.error("INDEX: Usuário não está logado no Firebase!");
+                return;
+            }
+
+            console.log("INDEX: Usuário logado no Firebase:", currentUser.uid);
+            
+            // Buscar dados do usuário no Firestore
+            firebase.firestore().collection('users').doc(currentUser.uid).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        console.log("INDEX: Dados do usuário no Firestore:", userData);
+                        
+                        // Salvar dados no localStorage para o jogo
+                        // Salvar dados no localStorage com logs detalhados
+                        const gameData = {
+                            userId: userData.numericId || currentUser.uid,
+                            fullName: userData.fullName || '',
+                            balance: userData.balance || 0,
+                            role: userData.role || 'player'
+                        };
+                        
+                        console.log("INDEX: Salvando dados no localStorage:", gameData);
+                        
+                        localStorage.setItem('crashGameUserId', gameData.userId);
+                        localStorage.setItem('crashGamePlayerBalance', gameData.balance);
+                        localStorage.setItem('crashGameAuthToken', 'authenticated');
+                        localStorage.setItem('crashGameLoggedInUser', JSON.stringify(gameData));
+                        
+                        // Verificar se foi salvo corretamente
+                        const verificacao = {
+                            authToken: localStorage.getItem('crashGameAuthToken'),
+                            loggedInUser: localStorage.getItem('crashGameLoggedInUser'),
+                            userId: localStorage.getItem('crashGameUserId'),
+                            balance: localStorage.getItem('crashGamePlayerBalance')
+                        };
+                        
+                        console.log("INDEX: Verificação dos dados salvos:", verificacao);
+                        
+                        console.log("INDEX: Dados confirmados, redirecionando para game.html...");
+                        
+                        // Passar dados via URL como backup
+                        const urlParams = new URLSearchParams({
+                            userId: gameData.userId,
+                            fullName: encodeURIComponent(gameData.fullName),
+                            balance: gameData.balance,
+                            role: gameData.role
+                        });
+                        
+                        // Aguardar um pouco antes de redirecionar
+                        setTimeout(() => {
+                            window.location.href = `game.html?${urlParams.toString()}`;
+                        }, 500);
+                    } else {
+                        console.error("INDEX: Dados do usuário não encontrados no Firestore!");
+                    }
+                })
+                .catch((error) => {
+                    console.error("INDEX: Erro ao buscar dados do usuário:", error);
+                });
+        }
+
+        function irParaPromotor() {
+            console.log("INDEX: Indo para o sistema de promotor");
+            window.location.href = 'promotor.html';
+        }
+
+        // Removida interceptação que causava loop
+    </script>
+</body>
+</html>

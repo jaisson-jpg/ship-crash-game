@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login / Cadastro - Ship Crash</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/styles.css"/>
+
+  <!-- 1) Firebase compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+  <!-- 2) Sua configuração do Firebase -->
+  <script src="js/firebase-config.js"></script>
+  <!-- 3) Utilitários de auth -->
+  <script src="js/auth-utils.js"></script>
+  <!-- 4) Sua lógica de auth -->
+  <script src="js/auth-firebase.js" defer></script>
+</head>
+<body class="auth-body">
+  <div class="auth-container">
+    <div id="loginForm" class="form-section">
+      <h2>Login</h2>
+      <input type="email" id="loginEmail" placeholder="Seu Email" required/>
+      <input type="password" id="loginPassword" placeholder="Sua Senha" required/>
+      <button id="loginBtn" class="btn-auth">Entrar</button>
+      <p class="auth-switch">
+        Não tem uma conta? <a href="#" id="showRegisterLink">Cadastre-se aqui</a>
+      </p>
+    </div>
+
+    <div id="registerForm" class="form-section" style="display:none;">
+      <h2>Cadastro</h2>
+      <input type="text" id="registerFullName" placeholder="Nome Completo" required/>
+      <input type="email" id="registerEmail" placeholder="Seu Email" required/>
+      <input type="text" id="registerCpf" placeholder="CPF (somente números)" required maxlength="11"/>
+      <input type="password" id="registerPassword" placeholder="Senha (mín 6)" required/>
+      <input type="password" id="registerConfirmPassword" placeholder="Confirme a Senha" required/>
+      <button id="registerBtn" class="btn-auth">Cadastrar</button>
+      <p class="auth-switch">
+        Já tem uma conta? <a href="#" id="showLoginLink">Faça login aqui</a>
+      </p>
+    </div>
+    <p id="authMessage" class="auth-message"></p>
+  </div>
+</body>
+</html>
