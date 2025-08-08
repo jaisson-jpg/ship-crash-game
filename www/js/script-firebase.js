@@ -345,6 +345,143 @@ function initializeGame() {
         });
 }
 
+// --- GESTÃO DE SALDO NO FIRESTORE ---
+async function debitBalanceFromFirestore(amount) {
+    console.log(`GAME.JS: 💳 Debitando R$ ${amount.toFixed(2)} do Firestore...`);
+    
+    try {
+        // Tentar com usuário autenticado primeiro
+        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+            const currentUser = firebase.auth().currentUser;
+            const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
+            
+            await firebase.firestore().runTransaction(async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+                if (userDoc.exists) {
+                    const currentBalance = userDoc.data().balance || 0;
+                    const newBalance = Math.max(0, currentBalance - amount);
+                    
+                    transaction.update(userRef, {
+                        balance: newBalance,
+                        updatedAt: new Date().toISOString()
+                    });
+                    
+                    console.log(`GAME.JS: ✅ Saldo debitado: R$ ${currentBalance.toFixed(2)} → R$ ${newBalance.toFixed(2)}`);
+                    playerBalance = newBalance;
+                    localStorage.setItem('crashGamePlayerBalance', playerBalance);
+                    updateBalanceDisplay();
+                }
+            });
+            return;
+        }
+        
+        // Fallback: buscar por numericId
+        const loggedInUserStr = localStorage.getItem('crashGameLoggedInUser');
+        if (loggedInUserStr) {
+            const userData = JSON.parse(loggedInUserStr);
+            const numericId = userData.userId;
+            
+            const usersQuery = await firebase.firestore().collection('users')
+                .where('numericId', '==', parseInt(numericId))
+                .limit(1)
+                .get();
+            
+            if (!usersQuery.empty) {
+                const userDoc = usersQuery.docs[0];
+                const userRef = userDoc.ref;
+                
+                await firebase.firestore().runTransaction(async (transaction) => {
+                    const currentUserDoc = await transaction.get(userRef);
+                    if (currentUserDoc.exists) {
+                        const currentBalance = currentUserDoc.data().balance || 0;
+                        const newBalance = Math.max(0, currentBalance - amount);
+                        
+                        transaction.update(userRef, {
+                            balance: newBalance,
+                            updatedAt: new Date().toISOString()
+                        });
+                        
+                        console.log(`GAME.JS: ✅ Saldo debitado (numericId): R$ ${currentBalance.toFixed(2)} → R$ ${newBalance.toFixed(2)}`);
+                        playerBalance = newBalance;
+                        localStorage.setItem('crashGamePlayerBalance', playerBalance);
+                        updateBalanceDisplay();
+                    }
+                });
+            }
+        }
+    } catch (error) {
+        console.error("GAME.JS: ❌ Erro ao debitar saldo:", error);
+    }
+}
+
+async function creditBalanceToFirestore(amount) {
+    console.log(`GAME.JS: 💰 Creditando R$ ${amount.toFixed(2)} no Firestore...`);
+    
+    try {
+        // Tentar com usuário autenticado primeiro
+        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+            const currentUser = firebase.auth().currentUser;
+            const userRef = firebase.firestore().collection('users').doc(currentUser.uid);
+            
+            await firebase.firestore().runTransaction(async (transaction) => {
+                const userDoc = await transaction.get(userRef);
+                if (userDoc.exists) {
+                    const currentBalance = userDoc.data().balance || 0;
+                    const newBalance = currentBalance + amount;
+                    
+                    transaction.update(userRef, {
+                        balance: newBalance,
+                        updatedAt: new Date().toISOString()
+                    });
+                    
+                    console.log(`GAME.JS: ✅ Saldo creditado: R$ ${currentBalance.toFixed(2)} → R$ ${newBalance.toFixed(2)}`);
+                    playerBalance = newBalance;
+                    localStorage.setItem('crashGamePlayerBalance', playerBalance);
+                    updateBalanceDisplay();
+                }
+            });
+            return;
+        }
+        
+        // Fallback: buscar por numericId
+        const loggedInUserStr = localStorage.getItem('crashGameLoggedInUser');
+        if (loggedInUserStr) {
+            const userData = JSON.parse(loggedInUserStr);
+            const numericId = userData.userId;
+            
+            const usersQuery = await firebase.firestore().collection('users')
+                .where('numericId', '==', parseInt(numericId))
+                .limit(1)
+                .get();
+            
+            if (!usersQuery.empty) {
+                const userDoc = usersQuery.docs[0];
+                const userRef = userDoc.ref;
+                
+                await firebase.firestore().runTransaction(async (transaction) => {
+                    const currentUserDoc = await transaction.get(userRef);
+                    if (currentUserDoc.exists) {
+                        const currentBalance = currentUserDoc.data().balance || 0;
+                        const newBalance = currentBalance + amount;
+                        
+                        transaction.update(userRef, {
+                            balance: newBalance,
+                            updatedAt: new Date().toISOString()
+                        });
+                        
+                        console.log(`GAME.JS: ✅ Saldo creditado (numericId): R$ ${currentBalance.toFixed(2)} → R$ ${newBalance.toFixed(2)}`);
+                        playerBalance = newBalance;
+                        localStorage.setItem('crashGamePlayerBalance', playerBalance);
+                        updateBalanceDisplay();
+                    }
+                });
+            }
+        }
+    } catch (error) {
+        console.error("GAME.JS: ❌ Erro ao creditar saldo:", error);
+    }
+}
+
 // --- ATUALIZAÇÃO DE SALDO EM TEMPO REAL ---
 async function forceBalanceUpdateFromFirestore() {
     console.log("GAME.JS: 🔄 Forçando atualização de saldo do Firestore...");
@@ -829,12 +966,16 @@ function connectWebSocket() {
                     break;
                 case 'bet_accepted':
                     console.log("GAME.JS: 🎉 Aposta aceita!", data);
-                    playerBalance = data.newBalance;
+                    
+                    // 🔥 DEBITAR SALDO NO FIRESTORE
+                    if (data.debitFromBalance) {
+                        await debitBalanceFromFirestore(data.betAmount);
+                    }
+                    
                     currentBet = data.betAmount;
                     lastBetAmountAttempt = 0;
-                    localStorage.setItem('crashGamePlayerBalance', playerBalance.toString());
-                    updateBalanceDisplay();
                     gameRunning = true;
+                    
                     if (data.autoCashOutTarget) {
                         autoCashOutArmedForCurrentBet = true;
                         autoCashOutTargetForCurrentBet = data.autoCashOutTarget;
@@ -859,7 +1000,11 @@ function connectWebSocket() {
                     }
                     break;
                 case 'cash_out_success':
-                    clientSideOnCashOutSuccess(data.multiplier, data.winnings, data.newBalance, data.isAuto);
+                    // 🔥 CREDITAR GANHOS NO FIRESTORE
+                    if (data.creditToBalance) {
+                        await creditBalanceToFirestore(data.winnings);
+                    }
+                    clientSideOnCashOutSuccess(data.multiplier, data.winnings, playerBalance + data.winnings, data.isAuto);
                     break;
                 case 'cash_out_failed':
                      if (statusMessage) statusMessage.textContent = `❌ Saque Falhou: ${data.reason}`;

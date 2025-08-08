@@ -224,10 +224,13 @@ wss.on('connection', (ws) => {
               ws: ws
             };
             
+            // Aceitar aposta - cliente vai debitar o saldo
             ws.send(JSON.stringify({
-              type: 'bet_placed',
-              amount: message.amount,
-              round: currentRound
+              type: 'bet_accepted',
+              betAmount: message.amount,
+              round: currentRound,
+              autoCashOutTarget: message.autoCashOut || null,
+              debitFromBalance: true // Cliente deve debitar do Firestore
             }));
             
             console.log(`💰 Aposta: ${message.amount} por ${message.userId}`);
@@ -247,11 +250,14 @@ wss.on('connection', (ws) => {
             
             delete activeBets[cashOutId];
             
+            // Cash out bem-sucedido - cliente vai creditar o saldo
             ws.send(JSON.stringify({
               type: 'cash_out_success',
               multiplier: currentMultiplier,
-              winAmount: winAmount,
-              round: currentRound
+              winnings: winAmount,
+              isAuto: false,
+              round: currentRound,
+              creditToBalance: true // Cliente deve creditar no Firestore
             }));
             
             console.log(`💸 Cash out: ${winAmount.toFixed(2)} em ${currentMultiplier.toFixed(2)}x`);
