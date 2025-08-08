@@ -803,6 +803,7 @@ function connectWebSocket() {
                     }
                     break;
                 case 'bet_accepted':
+                    console.log("GAME.JS: 🎉 Aposta aceita!", data);
                     playerBalance = data.newBalance;
                     currentBet = data.betAmount;
                     lastBetAmountAttempt = 0;
@@ -812,10 +813,10 @@ function connectWebSocket() {
                     if (data.autoCashOutTarget) {
                         autoCashOutArmedForCurrentBet = true;
                         autoCashOutTargetForCurrentBet = data.autoCashOutTarget;
-                        if (statusMessage) statusMessage.textContent = `✅ Aposta de R$ ${currentBet.toFixed(2)} ACEITA! (Auto @ ${autoCashOutTargetForCurrentBet.toFixed(2)}x)`;
+                        if (statusMessage) statusMessage.textContent = `🎰 Aposta R$ ${currentBet.toFixed(2)} ATIVA! Auto-saque @ ${autoCashOutTargetForCurrentBet.toFixed(2)}x`;
                     } else {
                         autoCashOutArmedForCurrentBet = false;
-                        if (statusMessage) statusMessage.textContent = `✅ Aposta de R$ ${currentBet.toFixed(2)} ACEITA!`;
+                        if (statusMessage) statusMessage.textContent = `🎰 Aposta R$ ${currentBet.toFixed(2)} ATIVA! Boa sorte!`;
                     }
                     updateUIState();
                     break;
@@ -858,22 +859,50 @@ function connectWebSocket() {
 
 // --- FUNÇÕES DE CASHOUT ---
 function clientSideOnCashOutSuccess(multiplier, winnings, newBalance, isAuto) {
-    console.log(`CLIENTE: clientSideOnCashOutSuccess - Saldo Anterior Local: ${playerBalance}, Ganhos: ${winnings}, Novo Saldo Servidor: ${newBalance}`);
+    console.log(`GAME.JS: 🎉 Cash out bem-sucedido!`);
+    console.log(`GAME.JS: 💰 Saldo anterior: R$ ${playerBalance.toFixed(2)}`);
+    console.log(`GAME.JS: 🏆 Ganhos: R$ ${winnings.toFixed(2)}`);
+    console.log(`GAME.JS: 💰 Novo saldo: R$ ${newBalance.toFixed(2)}`);
+    console.log(`GAME.JS: 📈 Multiplicador: ${multiplier.toFixed(2)}x`);
+    
     playerBalance = newBalance;
     localStorage.setItem('crashGamePlayerBalance', playerBalance.toString());
     updateBalanceDisplay();
     adicionarApostaAoHistorico(currentBet, multiplier, winnings);
     gameRunning = false;
     autoCashOutArmedForCurrentBet = false;
-    const statusMsgText = isAuto ? `✅ Auto Saque @ ${multiplier.toFixed(2)}x!` : `✅ Você saiu @ ${multiplier.toFixed(2)}x!`;
-    if (statusMessage) statusMessage.textContent = `${statusMsgText} Ganhou R$ ${winnings.toFixed(2)}`;
+    
+    const statusMsgText = isAuto ? `🤖 Auto-saque @ ${multiplier.toFixed(2)}x!` : `🎯 Você saiu @ ${multiplier.toFixed(2)}x!`;
+    if (statusMessage) statusMessage.textContent = `${statusMsgText} Ganhou: R$ ${winnings.toFixed(2)} 🎉`;
     if (cashOutBtn) {
         cashOutBtn.disabled = true;
-        cashOutBtn.textContent = isAuto ? `Auto Sacado @ ${multiplier.toFixed(2)}x` : `Sacado @ ${multiplier.toFixed(2)}x`;
+        cashOutBtn.textContent = isAuto ? `🤖 Auto R$ ${winnings.toFixed(2)}` : `🎯 + R$ ${winnings.toFixed(2)}`;
     }
     currentBet = 0;
     updateUIState();
 }
+
+// --- FUNÇÕES DE APOSTAS RÁPIDAS ---
+function setBetAmount(amount) {
+    const betAmountInput = document.getElementById('betAmount');
+    if (betAmountInput) {
+        betAmountInput.value = amount.toFixed(2);
+        console.log(`GAME.JS: 💰 Valor definido para R$ ${amount.toFixed(2)}`);
+    }
+}
+
+function setBetAmountToBalance() {
+    const betAmountInput = document.getElementById('betAmount');
+    if (betAmountInput && playerBalance > 0) {
+        const maxBet = Math.min(playerBalance, 1000); // Limite máximo de R$ 1000
+        betAmountInput.value = maxBet.toFixed(2);
+        console.log(`GAME.JS: 💰 Valor definido para saldo total: R$ ${maxBet.toFixed(2)}`);
+    }
+}
+
+// Tornar funções globais
+window.setBetAmount = setBetAmount;
+window.setBetAmountToBalance = setBetAmountToBalance;
 
 // --- EVENT LISTENERS ---
 if (placeBetBtn && betAmountInput) {
@@ -884,14 +913,29 @@ if (placeBetBtn && betAmountInput) {
         }
 
         lastBetAmountAttempt = parseFloat(betAmountInput.value);
+        
+        console.log("GAME.JS: 🎰 Tentativa de aposta:", lastBetAmountAttempt);
+        console.log("GAME.JS: 💰 Saldo atual:", playerBalance);
+        
         if (isNaN(lastBetAmountAttempt) || lastBetAmountAttempt <= 0) {
-            if(statusMessage) { statusMessage.textContent = "Valor da aposta inválido!";}
+            if(statusMessage) statusMessage.textContent = "⚠️ Valor da aposta inválido!";
+            console.log("GAME.JS: ❌ Valor inválido:", lastBetAmountAttempt);
             return;
         }
+        
+        if (lastBetAmountAttempt < 1.00) {
+            if(statusMessage) statusMessage.textContent = "⚠️ Aposta mínima: R$ 1,00";
+            console.log("GAME.JS: ❌ Valor muito baixo:", lastBetAmountAttempt);
+            return;
+        }
+        
         if (lastBetAmountAttempt > playerBalance) {
-            if(statusMessage) statusMessage.textContent = "Saldo insuficiente!";
+            if(statusMessage) statusMessage.textContent = `⚠️ Saldo insuficiente! Saldo: R$ ${playerBalance.toFixed(2)}`;
+            console.log("GAME.JS: ❌ Saldo insuficiente. Aposta:", lastBetAmountAttempt, "Saldo:", playerBalance);
             return;
         }
+        
+        console.log("GAME.JS: ✅ Validações passaram, enviando aposta...");
 
         let autoTargetValue = null;
         if (enableAutoCashOut && enableAutoCashOut.checked) {
