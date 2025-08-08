@@ -967,10 +967,10 @@ function connectWebSocket() {
                 case 'bet_accepted':
                     console.log("GAME.JS: 🎉 Aposta aceita!", data);
                     
-                    // 🔥 DEBITAR SALDO NO FIRESTORE
-                    if (data.debitFromBalance) {
-                        await debitBalanceFromFirestore(data.betAmount);
-                    }
+                    // 🔥 DEBITAR SALDO LOCALMENTE (TEMPORÁRIO)
+                    playerBalance = Math.max(0, playerBalance - data.betAmount);
+                    localStorage.setItem('crashGamePlayerBalance', playerBalance.toString());
+                    updateBalanceDisplay();
                     
                     currentBet = data.betAmount;
                     lastBetAmountAttempt = 0;
@@ -1000,11 +1000,12 @@ function connectWebSocket() {
                     }
                     break;
                 case 'cash_out_success':
-                    // 🔥 CREDITAR GANHOS NO FIRESTORE
-                    if (data.creditToBalance) {
-                        await creditBalanceToFirestore(data.winnings);
-                    }
-                    clientSideOnCashOutSuccess(data.multiplier, data.winnings, playerBalance + data.winnings, data.isAuto);
+                    // 🔥 CREDITAR GANHOS LOCALMENTE (TEMPORÁRIO)
+                    playerBalance = playerBalance + data.winnings;
+                    localStorage.setItem('crashGamePlayerBalance', playerBalance.toString());
+                    updateBalanceDisplay();
+                    
+                    clientSideOnCashOutSuccess(data.multiplier, data.winnings, playerBalance, data.isAuto);
                     break;
                 case 'cash_out_failed':
                      if (statusMessage) statusMessage.textContent = `❌ Saque Falhou: ${data.reason}`;
