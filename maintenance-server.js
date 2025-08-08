@@ -1,10 +1,12 @@
-// 🛑 SERVIDOR DESLIGADO INTENCIONALMENTE
-console.log('🛑 SERVIDOR PAUSADO PARA MANUTENÇÃO');
-console.log('📅 Pausado em:', new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }));
-console.log('💤 Sistema em repouso até amanhã...');
+// 🛑 ERRO FATAL PROPOSITAL PARA PARAR RAILWAY
+console.log('🛑 FORÇANDO ERRO FATAL PARA PARAR SERVIDOR');
 
-// Sair imediatamente para forçar crash e parar o Railway
-setTimeout(() => {
-    console.log('🔌 Desligando servidor...');
-    process.exit(0);
-}, 2000);
+// Tentar importar módulo inexistente para causar crash
+require('modulo-inexistente-para-quebrar-servidor');
+
+// Se isso não funcionar, forçar erro de sintaxe
+throw new Error('SERVIDOR PAUSADO INTENCIONALMENTE - NÃO É UM ERRO REAL');
+
+// Múltiplas formas de parar
+process.exit(1);
+process.kill(process.pid, 'SIGTERM');
