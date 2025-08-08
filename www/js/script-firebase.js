@@ -491,6 +491,8 @@ function updateUIState() {
     const canBet = (gameState === 'WAITING_TO_START' && !gameRunning);
     const roundIsOngoing = (gameState === 'ROUND_ACTIVE');
 
+    console.log("GAME.JS: 🎮 updateUIState - Estado:", gameState, "GameRunning:", gameRunning, "CanBet:", canBet);
+
     // Habilita/Desabilita controles de aposta
     placeBetBtn.disabled = !canBet;
     betAmountInput.disabled = !canBet;
@@ -714,16 +716,39 @@ function connectWebSocket() {
             switch (data.type) {
                 case 'waiting':
                 case 'countdown':
+                case 'waiting_period':
+                    console.log("GAME.JS: 🕒 Período de espera/contagem regressiva");
                     gameState = 'WAITING_TO_START';
                     currentMultiplier = 1.00;
-                    if (placeBetBtn && placeBetBtn.disabled && !gameRunning) {
+                    
+                    // 🔥 RESETAR gameRunning para permitir novas apostas
+                    if (!gameRunning) {
+                        console.log("GAME.JS: ✅ Período de apostas ativo");
+                    } else {
+                        console.log("GAME.JS: ♻️ Resetando para nova rodada, gameRunning era:", gameRunning);
+                        gameRunning = false; // Reset para permitir novas apostas
+                        currentBet = 0;
                         lastBetAmountAttempt = 0;
+                        autoCashOutArmedForCurrentBet = false;
                     }
+                    
                     updateUIState();
                     if (data.timeLeft !== undefined && countdownDisplay) {
                         const timeString = Number.isInteger(data.timeLeft) ? data.timeLeft.toString() : data.timeLeft.toFixed(0);
                         countdownDisplay.innerHTML = `<span class="countdown-text-white">Próxima rodada em </span><span class="countdown-number-yellow">${timeString}</span><span class="countdown-text-white">s...</span>`;
                         countdownDisplay.style.display = 'block';
+                    }
+                    break;
+                case 'countdown_update':
+                    console.log("GAME.JS: ⏱️ Atualização de contagem regressiva:", data.countdown);
+                    if (data.countdown !== undefined && countdownDisplay) {
+                        countdownDisplay.innerHTML = `<span class="countdown-text-white">Próxima rodada em </span><span class="countdown-number-yellow">${data.countdown}</span><span class="countdown-text-white">s...</span>`;
+                        countdownDisplay.style.display = 'block';
+                    }
+                    // Garantir que o estado permaneça correto durante contagem
+                    if (gameState !== 'WAITING_TO_START') {
+                        gameState = 'WAITING_TO_START';
+                        updateUIState();
                     }
                     break;
                 case 'round_start':

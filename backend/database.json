@@ -76,6 +76,42 @@
   "nextUserId": 100008,
   "gameRounds": [
     {
+      "roundId": 12885,
+      "crashPoint": 4.2,
+      "timestamp": "2025-08-08T00:08:00.266Z",
+      "bets": {}
+    },
+    {
+      "roundId": 12884,
+      "crashPoint": 5.56,
+      "timestamp": "2025-08-08T00:07:22.200Z",
+      "bets": {}
+    },
+    {
+      "roundId": 12883,
+      "crashPoint": 1.73,
+      "timestamp": "2025-08-08T00:06:39.400Z",
+      "bets": {}
+    },
+    {
+      "roundId": 12882,
+      "crashPoint": 3.35,
+      "timestamp": "2025-08-08T00:06:16.870Z",
+      "bets": {}
+    },
+    {
+      "roundId": 12881,
+      "crashPoint": 1.34,
+      "timestamp": "2025-08-08T00:05:42.757Z",
+      "bets": {}
+    },
+    {
+      "roundId": 12880,
+      "crashPoint": 9.03,
+      "timestamp": "2025-08-08T00:05:24.693Z",
+      "bets": {}
+    },
+    {
       "roundId": 12879,
       "crashPoint": 1.68,
       "timestamp": "2025-08-08T00:04:33.678Z",
@@ -338,45 +374,9 @@
       "crashPoint": 1.85,
       "timestamp": "2025-08-07T23:36:39.958Z",
       "bets": {}
-    },
-    {
-      "roundId": 12835,
-      "crashPoint": 2.77,
-      "timestamp": "2025-08-07T23:36:16.061Z",
-      "bets": {}
-    },
-    {
-      "roundId": 12834,
-      "crashPoint": 193.42,
-      "timestamp": "2025-08-07T23:35:45.185Z",
-      "bets": {}
-    },
-    {
-      "roundId": 12833,
-      "crashPoint": 3.09,
-      "timestamp": "2025-08-07T23:34:02.502Z",
-      "bets": {}
-    },
-    {
-      "roundId": 12832,
-      "crashPoint": 1.87,
-      "timestamp": "2025-08-07T23:33:29.650Z",
-      "bets": {}
-    },
-    {
-      "roundId": 12831,
-      "crashPoint": 1.53,
-      "timestamp": "2025-08-07T23:33:05.519Z",
-      "bets": {}
-    },
-    {
-      "roundId": 12830,
-      "crashPoint": 1.17,
-      "timestamp": "2025-08-07T23:32:45.306Z",
-      "bets": {}
     }
   ],
-  "nextRoundId": 12880,
+  "nextRoundId": 12886,
   "userTransactions": [
     {
       "transactionId": "1748914087372_100005_v8ug6",
